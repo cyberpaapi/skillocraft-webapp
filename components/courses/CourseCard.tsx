@@ -1,0 +1,74 @@
+import Image from 'next/image';
+import { Course } from '@/types';
+import { FiStar, FiUsers, FiArrowRight } from 'react-icons/fi';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { BsCollectionPlay } from 'react-icons/bs';
+import { imgSrc } from '@/lib/imgSrc';
+
+interface CourseCardProps {
+  course: Course;
+}
+
+export default function CourseCard({ course }: CourseCardProps) {
+  return (
+    <Link 
+      href={`/courses/${course.id}`} 
+      className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 group"
+    >
+      <div className="relative h-48 w-full bg-gradient-to-br from-primary/10 to-primary/5">
+        <Image
+          src={imgSrc(course.imageLink, '/courses_1.png')}
+          alt={course.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+        <div className="font-sans absolute top-2 right-2 bg-secondary text-white text-xs font-semibold px-2 py-1 rounded">
+          {course.category.name}
+        </div>
+      </div>
+      
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-secondary font-medium">{course.creator.name}</span>
+          <div className="flex items-center font-sans text-primary">
+            <FiStar className="fill-current mr-1" />
+            {/* <span className="text-sm font-medium text-gray-700">{course.rating}</span> */}
+          </div>
+        </div>
+        
+        <h3 className="font-sans font-bold text-lg mb-2 line-clamp-2 group-hover:text-secondary transition-colors">
+          {course.name}
+        </h3>
+        
+        <p className="font-sans font-normal text-gray-600 text-sm mb-4 line-clamp-2">
+          {course.shortDescription}
+        </p>
+        
+        <div className="font-sans flex items-center justify-between text-sm text-gray-500 mb-4">
+          <div className="flex items-center">
+            <FiUsers className="mr-1" />
+            <span>{course.orderCount} students</span>
+          </div>
+          <div className="flex items-center">
+            <BsCollectionPlay className="mr-1" />
+            <span>{course.productCount}</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-bold text-gray-900">₹{course.price}</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="group-hover:bg-secondary group-hover:text-white transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View Details
+            <FiArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
+      </div>
+    </Link>
+  );
+}

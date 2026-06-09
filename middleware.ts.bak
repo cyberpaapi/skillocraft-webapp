@@ -1,0 +1,59 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  
+  // Check if the path starts with /admin
+  if (path.startsWith('/admin')) {
+    // Skip middleware for auth page and API routes
+    if (path === '/admin/auth' || path.startsWith('/api/')) {
+      return NextResponse.next();
+    }
+    
+    const accessToken = request.cookies.get('admin_access_token');
+    const userData = request.cookies.get('admin_user_data');
+    
+    // If no access token or user data, redirect to login
+    if (!accessToken?.value || !userData?.value) {
+      const loginUrl = new URL('/admin/auth', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    try {
+      const user = JSON.parse(userData.value);
+      
+      // If user is not an admin, redirect to home
+      if (user.role !== 'ADMIN') {
+        const homeUrl = new URL('/', request.url);
+        return NextResponse.redirect(homeUrl);
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      const loginUrl = new URL('/admin/auth', request.url);
+      // Clear invalid cookies
+      const response = NextResponse.redirect(loginUrl);
+      response.cookies.delete('admin_access_token');
+      response.cookies.delete('admin_refresh_token');
+      response.cookies.delete('admin_user_data');
+      return response;
+    }
+  }
+  
+  return NextResponse.next();
+}
+
+// Configure which paths the middleware runs on
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
