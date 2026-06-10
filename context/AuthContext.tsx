@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import Cookies from "js-cookie";
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { LoginUser } from '@/types';
 
 type User = Omit<LoginUser, 'role'> & {
@@ -40,41 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
-
-  // Initialize auth state from cookies/localStorage on mount
-  useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        const userDataCookie = Cookies.get(CUSTOMER_USER_DATA);
-        const token = Cookies.get(CUSTOMER_TOKEN_KEY);
-        // Fallback to localStorage for user data (non-sensitive)
-        const userDataLocal = typeof window !== 'undefined' ? localStorage.getItem('user_data') : null;
-        
-        if (token && (userDataCookie || userDataLocal)) {
-          const parsedUser = JSON.parse(userDataCookie || (userDataLocal as string));
-          if (parsedUser.role === 'CUSTOMER') {
-            setUser(parsedUser);
-          } else {
-            // Clear invalid user data
-            Cookies.remove(CUSTOMER_USER_DATA, { path: '/' });
-            Cookies.remove(CUSTOMER_TOKEN_KEY, { path: '/' });
-            if (typeof window !== 'undefined') localStorage.removeItem('user_data');
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth state:', error);
-        // Clear any corrupted data
-        Cookies.remove(CUSTOMER_USER_DATA, { path: '/' });
-        Cookies.remove(CUSTOMER_TOKEN_KEY, { path: '/' });
-        if (typeof window !== 'undefined') localStorage.removeItem('user_data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
 
   const login = useCallback((token: string, userData: Omit<User, 'role'>, refreshToken?: string) => {
     // Set tokens with 7 day expiration (align with admin)
@@ -118,51 +83,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [CUSTOMER_TOKEN_KEY, CUSTOMER_REFRESH_TOKEN_KEY, CUSTOMER_USER_DATA].forEach(cookie => {
       Cookies.remove(cookie, { path: '/' });
     });
-    
-    setUser(null);
-    
-    // Only redirect if we're not already on the home page
-    if (pathname !== '/') {
-      router.push('/');
-    }
-  }, [pathname, router]);
+    if (typeof window !== 'undefined') localStorage.removeItem('user_data');
 
-  const fetchUser = useCallback(async () => {
+    setUser(null);
+    router.push('/');
+  }, [router]);
+
+  useEffect(() => {
     const token = Cookies.get(CUSTOMER_TOKEN_KEY);
     const userDataCookie = Cookies.get(CUSTOMER_USER_DATA);
     const userDataLocal = typeof window !== 'undefined' ? localStorage.getItem('user_data') : null;
-    
+
     if (!token) {
-      setIsLoading(false);
       setUser(null);
+      setIsLoading(false);
       return;
     }
 
     try {
-      if (userDataCookie || userDataLocal) {
-        const parsedUser = JSON.parse(userDataCookie || (userDataLocal as string));
-        // Ensure we only accept CUSTOMER role in this context
+      const rawData = userDataCookie || userDataLocal;
+      if (rawData) {
+        const parsedUser = JSON.parse(rawData);
         if (parsedUser.role === 'CUSTOMER') {
           setUser(parsedUser);
         } else {
-          // If somehow an admin is here, log them out
-          logout();
+          setUser(null);
         }
       } else {
-        // If no user data in cookies but we have a token, clear auth
-        logout();
+        setUser(null);
       }
-    } catch (error) {
-      console.error("Failed to fetch user:", error);
-      logout();
+    } catch {
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, [logout]);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  }, []);
 
   return (
     <AuthContext.Provider 
