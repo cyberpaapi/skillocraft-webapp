@@ -51,7 +51,14 @@ export default function ReferralDashboard() {
     );
   }
 
-  if (!data) return null;
+  if (!data) return (
+    <section className="relative py-12">
+      <div className="container mx-auto text-center text-gray-500 py-20">
+        <p className="text-lg font-medium">Referral data not available.</p>
+        <p className="text-sm mt-2">Please sign in as a customer to view your referral dashboard.</p>
+      </div>
+    </section>
+  );
 
   return (
     <section className="relative py-12">
