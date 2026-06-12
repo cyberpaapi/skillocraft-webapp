@@ -2,6 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { IoPlayOutline } from "react-icons/io5";
 import { Testimonial } from "@/types";
+import { imgSrc } from "@/lib/imgSrc";
 
 
 const TestimonialCard: React.FC<Testimonial> = ({
@@ -14,7 +15,7 @@ const TestimonialCard: React.FC<Testimonial> = ({
       <IoPlayOutline className="size-6 stroke-2 absolute top-4 right-4 text-primary group-hover:text-white transition ease-in-out delay-150 duration-300" />
       <div className="md:size-28 size-16 rounded-full overflow-hidden mx-auto border-4 border-primary group-hover:border-white transition ease-in-out delay-150 duration-300">
         <Image
-          src={`${imageLink}`}
+          src={imgSrc(imageLink, '/avatar/1.png')}
           alt="Avatar"
           width={500}
           height={500}
