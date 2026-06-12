@@ -604,6 +604,17 @@ export default function CoursePage() {
                   ? 'Go to cart'
                   : 'Buy'}
               </button>
+              {ordered && course.pdfLink && (
+                <a
+                  href={course.pdfLink.startsWith('http') ? course.pdfLink : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${course.pdfLink}`}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full mt-3 flex items-center justify-center gap-2 border border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold py-2 rounded text-sm transition-colors"
+                >
+                  📄 Download Softcopy
+                </a>
+              )}
               <ul className="mt-4 text-sm text-gray-600 space-y-2">
                 <li>🎥 {course?.products?.length || 0} Lectures</li>
                 {calculateTotalDuration(course?.products) && (

@@ -54,25 +54,9 @@ const CREATORS = [
   { id: 3, name: "Dakshya Shastri", role: "Art Instructor & Creative Director", bio: "Renowned artist and educator with an international portfolio spanning 12 countries.", initial: "D" },
 ];
 
-const ONLINE_FAQS = [
-  "Can I watch All-In-One Cupcakes & Muffins Course recordings anytime I want?",
-  "How do I join an online live event on Skillocraft?",
-  "Is there a limit to how many online events I can attend per month?",
-  "Can I interact with the instructor during an online event?",
-  "What equipment do I need to attend online live events?",
-  "Are certificates provided after completing online live events?",
-];
+interface GeneralFAQ { id: string; question: string; answer: string; }
 
-const OUTDOOR_FAQS = [
-  "How do I register for outdoor live events near me?",
-  "Are outdoor events held rain or shine?",
-  "Can I bring guests to outdoor live events?",
-  "What safety measures are in place for outdoor events?",
-  "Is there a refund policy if I cannot attend an outdoor event?",
-  "How early should I arrive before an outdoor event starts?",
-];
-
-function FAQItem({ question }: { question: string }) {
+function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-gray-100 last:border-0">
@@ -85,7 +69,7 @@ function FAQItem({ question }: { question: string }) {
       </button>
       {open && (
         <p className="pb-3 text-sm text-gray-500 leading-relaxed">
-          Yes, all Skillocraft Live events are recorded and made available to registered participants for 30 days after the event. You can replay sessions at your own pace from your student dashboard.
+          {answer}
         </p>
       )}
     </div>
@@ -140,13 +124,20 @@ export default function LivePage() {
   const [selectedCity, setSelectedCity] = useState("All Cities");
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
+  const [faqs, setFaqs] = useState<GeneralFAQ[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    axiosHomePublic.get("/events?limit=50&status=ACTIVE")
+    axiosHomePublic.get("/events?limit=100&status=ACTIVE")
       .then(({ data }) => {
         const list: ApiEvent[] = data?.data?.events || data?.data || [];
         setApiEvents(list);
+      })
+      .catch(() => {});
+    axiosHomePublic.get("/general-faqs")
+      .then(({ data }) => {
+        const list: GeneralFAQ[] = data?.data || [];
+        setFaqs(list);
       })
       .catch(() => {});
   }, []);
@@ -368,44 +359,80 @@ export default function LivePage() {
       </section>
 
       {/* Explore New World */}
-      <section className="bg-slate-800 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-xl font-bold text-white mb-6">
-            Explore <span className="text-amber-400">New World</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {EXPLORE_EVENTS.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        </div>
-      </section>
+      {(() => {
+        const exploreEvents = apiEvents.filter(e => e.category?.toLowerCase().includes("explore"));
+        if (exploreEvents.length === 0) return null;
+        return (
+          <section className="bg-slate-800 py-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <h2 className="text-xl font-bold text-white mb-6">
+                Explore <span className="text-amber-400">New World</span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {exploreEvents.map(event => (
+                  <Link key={event.id} href={`/live/${event.id}`} className="bg-white/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-white/10 group block">
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image src={event.imageLink?.startsWith("http") ? event.imageLink : event.imageLink ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${event.imageLink}` : `/events_${(parseInt(event.id?.slice(-1) || "1") % 9) + 1}.png`} alt={event.title} fill className="object-cover group-hover:scale-105 transition-transform" />
+                      <div className="absolute bottom-3 left-3 bg-amber-400 text-slate-900 rounded-lg px-2 py-1 text-xs font-medium flex items-center gap-1"><IoCalendarOutline size={11} />{event.date}</div>
+                    </div>
+                    <div className="p-4"><span className="text-xs font-semibold text-amber-400 uppercase tracking-wide">{event.category}</span><h3 className="mt-1 text-sm font-semibold text-white group-hover:text-amber-400 transition-colors line-clamp-2">{event.title}</h3><p className="mt-1 text-xs text-white/60">₹{event.price === "0" ? "Free" : event.price}</p></div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Online Live Events */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
-          Online <span className="text-primary">Live Events</span>
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {ONLINE_EVENTS.map((event) => (
-            <EventCard key={event.id} event={event} showDate />
-          ))}
-        </div>
-      </section>
+      {(() => {
+        const onlineEvents = apiEvents.filter(e => e.category?.toLowerCase().includes("online"));
+        if (onlineEvents.length === 0) return null;
+        return (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Online <span className="text-primary">Live Events</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {onlineEvents.map(event => (
+                <Link key={event.id} href={`/live/${event.id}`} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 group block">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <Image src={event.imageLink?.startsWith("http") ? event.imageLink : event.imageLink ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${event.imageLink}` : `/events_${(parseInt(event.id?.slice(-1) || "1") % 9) + 1}.png`} alt={event.title} fill className="object-cover group-hover:scale-105 transition-transform" />
+                    <div className="absolute bottom-3 left-3 bg-primary text-white rounded-lg px-2 py-1 text-xs font-medium flex items-center gap-1"><IoCalendarOutline size={11} />{event.date}</div>
+                  </div>
+                  <div className="p-4"><span className="text-xs font-semibold text-primary uppercase tracking-wide">{event.category}</span><h3 className="mt-1 text-sm font-semibold text-gray-800 group-hover:text-primary transition-colors line-clamp-2">{event.title}</h3><p className="mt-1 text-xs font-bold text-primary">₹{event.price === "0" ? "Free" : event.price}</p></div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Outdoor Live Events */}
-      <section className="bg-gray-50 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">
-            Outdoor <span className="text-primary">Live Events</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {OUTDOOR_EVENTS.map((event) => (
-              <EventCard key={event.id} event={event} showDate />
-            ))}
-          </div>
-        </div>
-      </section>
+      {(() => {
+        const outdoorEvents = apiEvents.filter(e => e.category?.toLowerCase().includes("outdoor"));
+        if (outdoorEvents.length === 0) return null;
+        return (
+          <section className="bg-gray-50 py-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Outdoor <span className="text-primary">Live Events</span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {outdoorEvents.map(event => (
+                  <Link key={event.id} href={`/live/${event.id}`} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 group block">
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image src={event.imageLink?.startsWith("http") ? event.imageLink : event.imageLink ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${event.imageLink}` : `/events_${(parseInt(event.id?.slice(-1) || "1") % 9) + 1}.png`} alt={event.title} fill className="object-cover group-hover:scale-105 transition-transform" />
+                      <div className="absolute bottom-3 left-3 bg-primary text-white rounded-lg px-2 py-1 text-xs font-medium flex items-center gap-1"><IoCalendarOutline size={11} />{event.date}</div>
+                    </div>
+                    <div className="p-4"><span className="text-xs font-semibold text-primary uppercase tracking-wide">{event.category}</span><h3 className="mt-1 text-sm font-semibold text-gray-800 group-hover:text-primary transition-colors line-clamp-2">{event.title}</h3><p className="mt-1 text-xs text-gray-400 flex items-center gap-1"><FiMapPin size={10} />{event.venue}</p></div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Popular Creators */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -443,26 +470,20 @@ export default function LivePage() {
       </section>
 
       {/* FAQs */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-5">
-              Why You Should <span className="text-primary">Attend Online Events</span>
-            </h2>
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-              {ONLINE_FAQS.map((q, i) => <FAQItem key={i} question={q} />)}
-            </div>
+      {faqs.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-5">
+            Frequently Asked <span className="text-primary">Questions</span>
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {[faqs.slice(0, Math.ceil(faqs.length / 2)), faqs.slice(Math.ceil(faqs.length / 2))].map((group, gi) => (
+              <div key={gi} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                {group.map((faq) => <FAQItem key={faq.id} question={faq.question} answer={faq.answer} />)}
+              </div>
+            ))}
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-5">
-              Why You Should <span className="text-primary">Join Outdoor Live Events</span>
-            </h2>
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-              {OUTDOOR_FAQS.map((q, i) => <FAQItem key={i} question={q} />)}
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

@@ -234,6 +234,7 @@ export interface CourseDetails {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  pdfLink?: string;
   category: {
     id: string;
     name: string;

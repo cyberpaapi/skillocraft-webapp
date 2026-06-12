@@ -94,7 +94,7 @@ export default function BannerCarousel() {
               className="flex-none px-1.5"
               style={{ width: `${100 / visibleCount}%` }}
             >
-              <div className="relative aspect-[16/7] rounded-xl overflow-hidden shadow-md group/card">
+              <div className="relative aspect-[16/10] rounded-xl overflow-hidden shadow-md group/card">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imgSrc(banner.imageLink, '/events_1.png')}
