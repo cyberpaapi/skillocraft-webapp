@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { FC } from "react";
 import { axiosHomePublic } from "@/services/axiosHomeService";
 import { FeaturedBand, FeatureGallery } from "@/types";
+import { imgSrc } from "@/lib/imgSrc";
 
 // const slides = [
 //   "/awards/a1.jpg",
@@ -131,12 +132,8 @@ const AwardsHome:FC = () => {
             }}
           >
             {gallery.map((item, index) => {
-              const imageUrl = item.imageLink?.startsWith('http') 
-                ? item.imageLink 
-                : item.imageLink 
-                  ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${item.imageLink}`
-                  : '';
-                
+              const imageUrl = imgSrc(item.imageLink, '');
+
               return (
                 <SwiperSlide key={item.id || index}>
                   {imageUrl ? (
@@ -166,11 +163,7 @@ const AwardsHome:FC = () => {
             </span>
             <div className="flex flex-wrap md:gap-3 gap-1">
               {brands.map((brand) => {
-                const logoUrl = brand.logo?.startsWith('http')
-                  ? brand.logo
-                  : brand.logo
-                    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${brand.logo}`
-                    : '';
+                const logoUrl = imgSrc(brand.logo, '');
                   
                 return logoUrl ? (
                   <div key={brand.id} className="md:size-12 size-8 relative">
