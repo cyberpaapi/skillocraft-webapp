@@ -50,6 +50,16 @@ type TabKey = typeof TABS[number]['key'];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) { resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve();
+    document.body.appendChild(script);
+  });
+}
+
 export default function ContentMain() {
   const router = useRouter();
   const { invalidateNavbarData } = useInvalidateNavbarData();
@@ -91,22 +101,57 @@ export default function ContentMain() {
     if (!cartData?.courses?.length) return;
     setIsProcessing(true);
     try {
-      const res = await axiosHomeProtected.post('/orders', {
+      // Step 1: Create Razorpay order on backend
+      const { data: orderData } = await axiosHomeProtected.post('/razorpay/course-order', {
         cartIds: cartData.courses.map(c => c.id),
-        totalAmount: courseTotal.toFixed(2).toString(),
-        payableAmount: courseTotal.toFixed(2).toString(),
-        transactionId: `TXN-${Date.now()}`,
-        paymentType: 'ONLINE',
+        totalAmount: courseTotal.toFixed(2),
       });
-      if (res.data.status === 1) {
-        invalidateNavbarData();
-        router.push('/thankyou');
-      } else {
-        toast.error('Order failed. Please try again.');
-      }
+
+      const { orderId, amount, currency, keyId } = orderData.data;
+      const cartIds = cartData.courses.map(c => c.id);
+
+      // Step 2: Load Razorpay script
+      await loadRazorpayScript();
+
+      // Step 3: Open Razorpay checkout
+      const rzp = new (window as any).Razorpay({
+        key: keyId,
+        amount,
+        currency,
+        order_id: orderId,
+        name: 'Skillocraft',
+        description: `${cartData.courses.length} course(s)`,
+        image: '/logo.png',
+        theme: { color: '#f97316' },
+        handler: async (response: any) => {
+          try {
+            // Step 4: Verify payment on backend
+            const { data: verifyData } = await axiosHomeProtected.post('/razorpay/verify-course', {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              cartIds,
+              totalAmount: courseTotal.toFixed(2),
+            });
+            if (verifyData.status === 1) {
+              invalidateNavbarData();
+              router.push('/thankyou');
+            } else {
+              toast.error('Payment verification failed. Contact support.');
+            }
+          } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setIsProcessing(false),
+        },
+      });
+      rzp.open();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Checkout failed');
-    } finally {
+      toast.error(err?.response?.data?.message || 'Failed to initiate payment');
       setIsProcessing(false);
     }
   };
@@ -315,13 +360,13 @@ export default function ContentMain() {
               {isProcessing ? (
                 <><FaSpinner className="animate-spin" /> Processing...</>
               ) : (
-                'Complete Purchase'
+                'Pay with Razorpay'
               )}
             </button>
           )}
 
           <p className="text-xs text-gray-400 mt-3 text-center">
-            By purchasing you agree to our Terms of Service
+            Secured by Razorpay · 256-bit encryption
           </p>
         </div>
       </div>
