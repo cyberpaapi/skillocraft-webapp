@@ -77,7 +77,7 @@ export default function CoursesFilter({ categories }: CoursesFilterProps) {
             
             <div className="w-full sm:w-64">
               <select
-                className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-10"
+                className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-10 bg-white text-gray-800"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >

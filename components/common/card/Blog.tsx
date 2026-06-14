@@ -27,6 +27,11 @@ const BlogCard: React.FC<BlogListResponseData> = ({
         {title}
       </h3>
       <p className="text-xs text-gray-500 line-clamp-2">{shortDescription}</p>
+      <div className="mt-3">
+        <span className="inline-block text-xs font-semibold text-primary border border-primary px-3 py-1 rounded-full group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+          Read Blog →
+        </span>
+      </div>
     </Link>
   );
 };

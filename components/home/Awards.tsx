@@ -6,7 +6,9 @@ import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FC } from "react";
 import { axiosHomePublic } from "@/services/axiosHomeService";
-import { FeaturedBand, FeatureGallery } from "@/types";
+import { FeaturedBand } from "@/types";
+
+interface FeatureGallery { id: string; imageLink: string; description?: string; linkUrl?: string; }
 import { imgSrc } from "@/lib/imgSrc";
 
 // const slides = [
@@ -133,24 +135,29 @@ const AwardsHome:FC = () => {
           >
             {gallery.map((item, index) => {
               const imageUrl = imgSrc(item.imageLink, '');
+              const imgEl = imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={item.description || `Gallery item ${index + 1}`}
+                  width={500}
+                  height={500}
+                  className={`w-full h-auto object-cover md:rounded-3xl rounded-2xl transition-all duration-500 ${
+                    index === centerIndex ? "scale-100 z-10" : "scale-90 z-0"
+                  }`}
+                />
+              ) : (
+                <div className="w-full h-64 bg-gray-200 rounded-2xl flex items-center justify-center">
+                  <span className="text-gray-500">No image</span>
+                </div>
+              );
 
               return (
                 <SwiperSlide key={item.id || index}>
-                  {imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt={item.description || `Gallery item ${index + 1}`}
-                      width={500}
-                      height={500}
-                      className={`w-full h-auto object-cover md:rounded-3xl rounded-2xl transition-all duration-500 ${
-                        index === centerIndex ? "scale-100 z-10" : "scale-90 z-0"
-                      }`}
-                    />
-                  ) : (
-                    <div className="w-full h-64 bg-gray-200 rounded-2xl flex items-center justify-center">
-                      <span className="text-gray-500">No image</span>
-                    </div>
-                  )}
+                  {item.linkUrl ? (
+                    <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                      {imgEl}
+                    </a>
+                  ) : imgEl}
                 </SwiperSlide>
               );
             })}
