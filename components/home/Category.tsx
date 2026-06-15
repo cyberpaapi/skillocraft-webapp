@@ -65,7 +65,7 @@ const CategoryHome:FC = () => {
             const isEven = index % 2 === 0;
 
             const overlayColorClass = isEven
-              ? "bg-white/85"
+              ? "bg-white/95"
               : "bg-primary/85";
         
             const titleColorClass = isEven

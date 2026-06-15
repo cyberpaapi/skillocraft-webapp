@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Star, User } from 'lucide-react';
+import { imgSrc } from '@/lib/imgSrc';
 import { useQuery } from '@tanstack/react-query';
 import { CourseDetails, CourseAnalytics, Product } from '@/types';
 import { axiosHomePublic, axiosHomeProtected } from '@/services/axiosHomeService';
@@ -12,6 +13,35 @@ import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useModal } from '@/context/ModalContext';
 import { useInvalidateNavbarData } from '@/hooks/useInvalidateNavbarData';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+interface CourseDownloadItem { id: string; fileName: string; fileUrl: string; fileSize?: string; }
+
+function CourseDownloads({ courseId }: { courseId: string }) {
+  const { data: downloads } = useQuery<CourseDownloadItem[]>({
+    queryKey: ['course-downloads-public', courseId],
+    queryFn: async () => {
+      const res = await axiosHomePublic.get(`/courses/${courseId}/downloads`);
+      return res.data?.data || [];
+    },
+    enabled: !!courseId,
+  });
+  if (!downloads || downloads.length === 0) return null;
+  return (
+    <div className="mt-3 space-y-2">
+      {downloads.map((dl) => {
+        const href = dl.fileUrl.startsWith('http') ? dl.fileUrl : `${API_BASE}${dl.fileUrl}`;
+        return (
+          <a key={dl.id} href={href} download target="_blank" rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 border border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold py-2 rounded text-sm transition-colors">
+            📄 {dl.fileName}
+          </a>
+        );
+      })}
+    </div>
+  );
+}
 
 // Define FAQ type
 interface FAQ {
@@ -201,26 +231,21 @@ export default function CoursePage() {
                 <video
                   controls
                   className="w-full h-full object-cover"
-                  poster={course?.imageLink ? `${course.imageLink}` : undefined}
+                  poster={course?.imageLink ? imgSrc(course.imageLink) : undefined}
                 >
-                  <source
-                    src={course.teaserVideo.startsWith('http') ? course.teaserVideo : `${process.env.NEXT_PUBLIC_API_URL}${course.teaserVideo}`}
-                    type="video/mp4"
-                  />
+                  <source src={imgSrc(course.teaserVideo)} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               ) : course?.imageLink ? (
                 <Image
-                  src={course.imageLink.startsWith('http') 
-                    ? course.imageLink 
-                    : `${process.env.NEXT_PUBLIC_API_URL}${course.imageLink}`}
+                  src={imgSrc(course.imageLink)}
                   alt="Course Image"
                   width={500}
                   height={500}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-course.jpg'; // Fallback to placeholder
+                    target.src = '/placeholder-course.jpg';
                   }}
                 />
               ) : (
@@ -604,17 +629,7 @@ export default function CoursePage() {
                   ? 'Go to cart'
                   : 'Buy'}
               </button>
-              {ordered && course.pdfLink && (
-                <a
-                  href={course.pdfLink.startsWith('http') ? course.pdfLink : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${course.pdfLink}`}
-                  download
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full mt-3 flex items-center justify-center gap-2 border border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold py-2 rounded text-sm transition-colors"
-                >
-                  📄 Download Softcopy
-                </a>
-              )}
+              {ordered && <CourseDownloads courseId={id} />}
               <ul className="mt-4 text-sm text-gray-600 space-y-2">
                 <li>🎥 {course?.products?.length || 0} Lectures</li>
                 {calculateTotalDuration(course?.products) && (

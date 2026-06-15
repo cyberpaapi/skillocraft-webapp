@@ -1,11 +1,13 @@
 import Image from "next/image";
-//import Link from "next/link";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
-import { FC, useState } from "react";
+import { FC } from "react";
 import { SuccessStory } from "@/types";
+import { imgSrc } from "@/lib/imgSrc";
 
 const StoryCard: FC<SuccessStory> = ({
+  id,
   name,
   description,
   imageLink,
@@ -13,27 +15,23 @@ const StoryCard: FC<SuccessStory> = ({
   earning,
   coverPhoto
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const toggleDescription = () => {
-    setIsExpanded((prev) => !prev);
-  };
-
   return (
-    <div className="md:rounded-3xl rounded-2xl group md:p-8 p-6 bg-background shadow-xl">
+    <Link href={`/success/${id}`} className="block md:rounded-3xl rounded-2xl group md:p-8 p-6 bg-background shadow-xl hover:shadow-2xl transition-shadow">
       <Image
-        src={`${coverPhoto}`}
+        src={imgSrc(coverPhoto)}
         alt="Story Image"
         width={500}
         height={500}
+        unoptimized
         className="w-full h-auto object-cover md:rounded-2xl rounded-xl"
       />
       <div className="flex items-center gap-2 mt-4 mb-2">
         <Image
-          src={`${imageLink}`}
+          src={imgSrc(imageLink)}
           alt="Avatar"
           width={500}
           height={500}
+          unoptimized
           className="size-12 object-cover rounded-full"
         />
         <div>
@@ -44,32 +42,19 @@ const StoryCard: FC<SuccessStory> = ({
         </div>
       </div>
       <Button className="text-sm py-1 px-8 capitalize rounded-full" variant="default" asChild>
-        {name}
+        <span>{name}</span>
       </Button>
       <p className="text-xs text-black mt-5">
-        Brand: {brand} 
+        Brand: {brand}
       </p>
       <p className="text-xs text-black">
         Earning: {earning} / month
       </p>
-
-      {/* Description with toggle */}
-      <p
-        className={`text-sm text-primary my-2 transition-all duration-300 ${
-          isExpanded ? "" : "line-clamp-2"
-        }`}
-      >
+      <p className="text-sm text-primary my-2 line-clamp-2">
         {description}
       </p>
-
-      {/* Read More / Show Less toggle button */}
-      <p
-        className="text-sm font-semibold text-red-500 cursor-pointer"
-        onClick={toggleDescription}
-      >
-        {isExpanded ? "Show Less" : "Read More..."}
-      </p>
-    </div>
+      <p className="text-sm font-semibold text-red-500">Read More...</p>
+    </Link>
   );
 };
 

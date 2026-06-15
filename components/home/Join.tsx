@@ -33,6 +33,7 @@ const JoinHome:FC = () => {
                 width={400}
                 height={700}
                 alt="Skillocraft App"
+                unoptimized
                 className="w-full h-auto drop-shadow-2xl"
               />
             </div>

@@ -14,8 +14,13 @@ const HeroSuccess = () => {
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [banners, setBanners] = React.useState<any[]>([]);
   const [bannersLoaded, setBannersLoaded] = React.useState(false);
+  const [customVideoUrl, setCustomVideoUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    axiosPublic.get("/site-settings?keys=success_hero_video").then((res) => {
+      const v = res.data?.data?.success_hero_video;
+      if (v) setCustomVideoUrl(v.startsWith("http") ? v : `${API_BASE}${v}`);
+    }).catch(() => {});
     axiosPublic.get("/banners").then((res) => {
       if (res.data?.status === 1) {
         const filtered = (res.data.data || []).filter(
@@ -93,7 +98,7 @@ const HeroSuccess = () => {
           loop
           muted
         >
-          <source src="/video/1.mp4" type="video/mp4" />
+          <source src={customVideoUrl || "/video/1.mp4"} type="video/mp4" />
         </video>
       </div>
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black to-transparent" />

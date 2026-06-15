@@ -4,6 +4,8 @@ import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
 import { IoCaretForwardCircleOutline, IoCaretBackCircleOutline } from "react-icons/io5";
+import { useEffect, useState } from "react";
+import { axiosPublic } from "@/services/axiosService";
 
 const Slides = [
   "/map-1.png",
@@ -11,7 +13,23 @@ const Slides = [
   "/map-1.png",
 ];
 
+const DEFAULT_TITLE = "Desh Bhar Mein Hunar";
+const DEFAULT_SUBTITLE = "With our support, 50,000+ Indian's are learning and earning.";
+
 const HunarSuccess = () => {
+  const [title, setTitle] = useState(DEFAULT_TITLE);
+  const [subtitle, setSubtitle] = useState(DEFAULT_SUBTITLE);
+
+  useEffect(() => {
+    axiosPublic.get("/site-settings?keys=success_hunar_title,success_hunar_subtitle")
+      .then((res) => {
+        const d = res.data?.data || {};
+        if (d.success_hunar_title) setTitle(d.success_hunar_title);
+        if (d.success_hunar_subtitle) setSubtitle(d.success_hunar_subtitle);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="relative md:py-24 py-12">
       <Image
@@ -23,15 +41,19 @@ const HunarSuccess = () => {
       />
 
       <div className="container mx-auto">
-        {/* Section Title */}
         <div className="md:space-y-4 space-y-2 text-center max-w-4xl mx-auto mb:mb-12 mb-8">
           <h2 className="xl:text-5xl lg:text-4xl md:text-3xl text-2xl font-medium text-secondary">
-            Desh Bhar{" "}
-            <span className="inline-block font-bold text-primary">Mein Hunar</span>
+            {title.includes("Hunar") ? (
+              <>
+                {title.split("Hunar")[0]}
+                <span className="inline-block font-bold text-primary">Hunar</span>
+                {title.split("Hunar")[1]}
+              </>
+            ) : (
+              <span className="inline-block font-bold text-primary">{title}</span>
+            )}
           </h2>
-          <p className="md:text-lg text-sm font-light">
-            With our support, 50,000+ Indian’s are learning and earning.
-          </p>
+          <p className="md:text-lg text-sm font-light">{subtitle}</p>
         </div>
         <Swiper
           spaceBetween={0}
