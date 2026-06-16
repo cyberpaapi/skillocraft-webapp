@@ -70,11 +70,21 @@ const formatDuration = (duration?: number) => {
 
 const calculateTotalDuration = (products?: Array<Product>) => {
   if (!products || products.length === 0) return null;
-  const totalSeconds = products.reduce((sum, p) => sum + (p.duration || 0), 0);
+  let totalSeconds = 0;
+  for (const p of products) {
+    if (p.duration && p.duration > 0) {
+      totalSeconds += p.duration;
+    } else if (p.formattedDuration && p.formattedDuration !== '00:00:00') {
+      const parts = p.formattedDuration.split(':').map(Number);
+      if (parts.length === 3) totalSeconds += parts[0] * 3600 + parts[1] * 60 + parts[2];
+      else if (parts.length === 2) totalSeconds += parts[0] * 60 + parts[1];
+    }
+  }
   if (totalSeconds === 0) return null;
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
-  return `${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 };
 
 export default function CoursePage() {
@@ -267,9 +277,7 @@ export default function CoursePage() {
                 <div className="relative w-9 h-9">
                   {course?.creator?.imageLink ? (
                     <Image
-                      src={course.creator.imageLink.startsWith('http') 
-                        ? course.creator.imageLink 
-                        : `${process.env.NEXT_PUBLIC_API_URL}${course.creator.imageLink}`}
+                      src={imgSrc(course.creator.imageLink)}
                       alt="Author"
                       width={36}
                       height={36}
@@ -689,17 +697,17 @@ export default function CoursePage() {
                   <div className="relative w-20 h-20">
                     {course.creator?.imageLink ? (
                       <Image
-                        src={`${course.creator.imageLink}`}
+                        src={imgSrc(course.creator.imageLink)}
                         alt={course.creator?.name || 'Instructor'}
                         width={80}
                         height={80}
-                        className="rounded-full border-4 border-white"
+                        className="rounded-full border-4 border-white object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
                         }}
                       />
-                    ) : 
+                    ) :
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-600 rounded-full border-4 border-white">
                       <User className="w-8 h-8 text-gray-300" />
                     </div>}

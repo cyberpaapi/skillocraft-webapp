@@ -36,6 +36,7 @@ interface FeatureGallery { id: string; imageLink: string; description?: string; 
 const AwardsHome:FC = () => {
   const [brands, setBrands] = useState<FeaturedBand[]>([]);
   const [gallery, setGallery] = useState<FeatureGallery[]>([]);
+  const [logos, setLogos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,8 +72,20 @@ const AwardsHome:FC = () => {
         setIsLoading(false);
       }
     };
+
+    const fetchLogos = async () => {
+      try {
+        const res = await axiosHomePublic.get('/site-settings?keys=awards_logos');
+        const val = res.data?.data?.awards_logos;
+        if (val) {
+          try { setLogos(JSON.parse(val)); } catch { setLogos([]); }
+        }
+      } catch {}
+    };
+
     fetchBrands();
     fetchGallery();
+    fetchLogos();
   }, []);
 
   if (isLoading) {
@@ -135,9 +148,9 @@ const AwardsHome:FC = () => {
                 <Image
                   src={imageUrl}
                   alt={item.description || `Gallery item ${index + 1}`}
-                  width={500}
-                  height={500}
-                  className="w-full h-auto object-cover md:rounded-3xl rounded-2xl"
+                  width={800}
+                  height={600}
+                  className="w-full h-auto md:rounded-3xl rounded-2xl"
                 />
               ) : (
                 <div className="w-full h-64 bg-gray-200 rounded-2xl flex items-center justify-center">
@@ -156,6 +169,23 @@ const AwardsHome:FC = () => {
               );
             })}
           </Swiper>
+
+          {/* Admin-managed Logos */}
+          {logos.length > 0 && (
+            <div className="flex items-center flex-wrap md:gap-4 gap-3">
+              <div className="flex flex-wrap md:gap-3 gap-2">
+                {logos.map((url, i) => (
+                  <div key={i} className="md:size-14 size-10">
+                    <img
+                      src={imgSrc(url, '')}
+                      alt={`Logo ${i + 1}`}
+                      className="w-full h-full rounded-full border border-gray-100 object-cover shadow-md"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Brands Logo */}
           <div className="flex items-center flex-wrap md:gap-6 gap-4">
