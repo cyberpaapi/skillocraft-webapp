@@ -134,6 +134,7 @@ const AwardsHome:FC = () => {
             centeredSlides={true}
             slidesPerView={3}
             loop={gallery.length >= 3}
+            loopAdditionalSlides={gallery.length}
             speed={600}
             coverflowEffect={{
               rotate: 0,
@@ -148,11 +149,9 @@ const AwardsHome:FC = () => {
             {gallery.map((item, index) => {
               const imageUrl = imgSrc(item.imageLink, '');
               const imgEl = imageUrl ? (
-                <Image
+                <img
                   src={imageUrl}
                   alt={item.description || `Gallery item ${index + 1}`}
-                  width={800}
-                  height={600}
                   className="w-full h-auto md:rounded-3xl rounded-2xl"
                 />
               ) : (
