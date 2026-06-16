@@ -6,6 +6,8 @@ import Image from "next/image";
 import { FC, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { axiosHomePublic } from "@/services/axiosHomeService";
+import { imgSrc } from "@/lib/imgSrc";
 
 import { FaCirclePlay } from "react-icons/fa6";
 
@@ -56,9 +58,20 @@ const StatCounter = ({
 // AboutHome Component
 const AboutHome :FC= () => {
   const [isVideoDialogOpen, setIsVideoDialogOpen] = React.useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const openVideoDialog = () => {
     setIsVideoDialogOpen(true);
   };
+
+  useEffect(() => {
+    axiosHomePublic.get('/site-settings?keys=home_how_it_works_video')
+      .then(({ data }) => {
+        const url = data?.data?.home_how_it_works_video;
+        if (url) setVideoUrl(imgSrc(url));
+      })
+      .catch(() => {});
+  }, []);
+
   const stats = [
     { end: 100, label: "Total Courses" },
     { end: 150, label: "Total Instructor" },
@@ -153,16 +166,16 @@ const AboutHome :FC= () => {
           <DialogTitle className="text-center p-4 pb-0 text-white">
             Video Title goes here...
           </DialogTitle>
-          <video className="w-full" controls preload="none">
-            <source src="/video/1.mp4" type="video/mp4" />
-            <track
-              src="/path/to/captions.vtt"
-              kind="subtitles"
-              srcLang="en"
-              label="English"
-            />
-            Your browser does not support the video tag.
-          </video>
+          {videoUrl ? (
+            <video className="w-full" controls preload="none">
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <div className="w-full aspect-video flex items-center justify-center bg-black/40 text-white text-sm">
+              No video uploaded yet
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </section>

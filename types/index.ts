@@ -193,6 +193,7 @@ export interface Product {
   videoLink: string;
   duration?: number;
   formattedDuration?: string;
+  thumbnail?: string;
   course?:{
     id: string;
     name: string;
@@ -229,6 +230,8 @@ export interface CourseDetails {
   featured: boolean;
   longDescription: string;
   price: string;
+  discountedPrice?: string | null;
+  language?: string;
   status: Status;
   creator: Creator;
   createdBy: string;

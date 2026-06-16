@@ -2,19 +2,9 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { FaPlay } from "react-icons/fa6";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { FC } from "react";
 
 const WhatHome:FC = () => {
-  const [isVideoDialogOpen, setIsVideoDialogOpen] = React.useState(false);
-  const openVideoDialog = () => {
-    setIsVideoDialogOpen(true);
-  };
   return (
     <section className="relative lg:py-24 py-12">
       <Image
@@ -66,9 +56,6 @@ const WhatHome:FC = () => {
           <div className="relative p-4">
             <div className="size-24 absolute top-0 left-0 -z-10 rounded-2xl bg-sky-400"></div>
             <div className="size-40 absolute bottom-0 right-0 -z-10 rounded-2xl bg-primary/70"></div>
-            <div className="absolute top-1/2 left-1/2 bg-white rounded-full size-10 inline-flex items-center justify-center cursor-pointer" onClick={openVideoDialog}>
-              <FaPlay className="size-4 text-sky-400" />
-            </div>
             <Image
               src="/what-1.jpg"
               alt="About Us"
@@ -79,25 +66,6 @@ const WhatHome:FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Video Dialog */}
-      <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
-        <DialogContent className="lg:max-w-2xl md:max-w-xl max-w-xs p-0 overflow-hidden border-0 bg-background backdrop-blur supports-[backdrop-filter]:bg-background/10">
-          <DialogTitle className="text-center p-4 pb-0 text-white">
-            Video Title goes here...
-          </DialogTitle>
-          <video className="w-full" controls preload="none">
-            <source src="/video/1.mp4" type="video/mp4" />
-            <track
-              src="/path/to/captions.vtt"
-              kind="subtitles"
-              srcLang="en"
-              label="English"
-            />
-            Your browser does not support the video tag.
-          </video>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 };

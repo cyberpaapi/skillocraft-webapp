@@ -27,7 +27,7 @@ const JoinHome:FC = () => {
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           {/* Phone mockup on the left */}
           <div className="flex items-center justify-center lg:justify-end">
-            <div className="relative w-64 sm:w-72 lg:w-80">
+            <div className="relative w-36 sm:w-40 lg:w-44">
               <Image
                 src="/phone-mockup.png"
                 width={400}

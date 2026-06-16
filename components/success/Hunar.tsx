@@ -6,26 +6,29 @@ import { Autoplay, Navigation } from "swiper/modules";
 import { IoCaretForwardCircleOutline, IoCaretBackCircleOutline } from "react-icons/io5";
 import { useEffect, useState } from "react";
 import { axiosPublic } from "@/services/axiosService";
-
-const Slides = [
-  "/map-1.png",
-  "/map-1.png",
-  "/map-1.png",
-];
+import { imgSrc } from "@/lib/imgSrc";
 
 const DEFAULT_TITLE = "Desh Bhar Mein Hunar";
 const DEFAULT_SUBTITLE = "With our support, 50,000+ Indian's are learning and earning.";
+const FALLBACK_SLIDES = ["/map-1.png"];
 
 const HunarSuccess = () => {
   const [title, setTitle] = useState(DEFAULT_TITLE);
   const [subtitle, setSubtitle] = useState(DEFAULT_SUBTITLE);
+  const [slides, setSlides] = useState<string[]>(FALLBACK_SLIDES);
 
   useEffect(() => {
-    axiosPublic.get("/site-settings?keys=success_hunar_title,success_hunar_subtitle")
+    axiosPublic.get("/site-settings?keys=success_hunar_title,success_hunar_subtitle,success_hunar_images")
       .then((res) => {
         const d = res.data?.data || {};
         if (d.success_hunar_title) setTitle(d.success_hunar_title);
         if (d.success_hunar_subtitle) setSubtitle(d.success_hunar_subtitle);
+        if (d.success_hunar_images) {
+          try {
+            const parsed = JSON.parse(d.success_hunar_images);
+            if (Array.isArray(parsed) && parsed.length > 0) setSlides(parsed);
+          } catch {}
+        }
       })
       .catch(() => {});
   }, []);
@@ -58,7 +61,7 @@ const HunarSuccess = () => {
         <Swiper
           spaceBetween={0}
           slidesPerView={1}
-          loop={true}
+          loop={slides.length > 1}
           autoplay={{
             delay: 3000,
             disableOnInteraction: false,
@@ -70,17 +73,21 @@ const HunarSuccess = () => {
           modules={[Autoplay, Navigation]}
           speed={3000}
         >
-          {Slides.map((image, index) => (
-            <SwiperSlide className="text-center" key={index}>
-              <Image
-                src={image}
-                alt={`Hero Slider ${index + 1}`}
-                width={500}
-                height={500}
-                className="inline-block w-auto object-cover"
-              />
-            </SwiperSlide>
-          ))}
+          {slides.map((image, index) => {
+            const src = image.startsWith("/r2/") || image.startsWith("http") ? imgSrc(image) : image;
+            return (
+              <SwiperSlide className="text-center" key={index}>
+                <Image
+                  src={src}
+                  alt={`Hunar ${index + 1}`}
+                  width={900}
+                  height={500}
+                  unoptimized
+                  className="inline-block w-full max-w-3xl mx-auto h-auto object-cover rounded-2xl"
+                />
+              </SwiperSlide>
+            );
+          })}
           <div className="swiper-button-next absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-800 hover:text-primary cursor-pointer after:hidden md:size-8 size-6">
             <IoCaretForwardCircleOutline />
           </div>

@@ -4,12 +4,13 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { EffectCoverflow } from "swiper/modules";
 import { FC } from "react";
 import { axiosHomePublic } from "@/services/axiosHomeService";
 import { FeaturedBand } from "@/types";
+import { imgSrc } from "@/lib/imgSrc";
 
 interface FeatureGallery { id: string; imageLink: string; description?: string; linkUrl?: string; }
-import { imgSrc } from "@/lib/imgSrc";
 
 // const slides = [
 //   "/awards/a1.jpg",
@@ -33,7 +34,6 @@ import { imgSrc } from "@/lib/imgSrc";
 // ];
 
 const AwardsHome:FC = () => {
-  const [centerIndex, setCenterIndex] = React.useState<number>(0);
   const [brands, setBrands] = useState<FeaturedBand[]>([]);
   const [gallery, setGallery] = useState<FeatureGallery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,26 +112,22 @@ const AwardsHome:FC = () => {
         </div>
 
         {/* Image Carousel */}
-        <div className="max-w-3xl mx-auto space-y-5">
-          {/* <CoverflowSlider /> */}
+        <div className="max-w-3xl mx-auto space-y-5 overflow-hidden">
           <Swiper
-            spaceBetween={0}
-            slidesPerView={3}
+            effect="coverflow"
+            grabCursor={true}
             centeredSlides={true}
-            loop={true}
-            speed={500}
-            onSlideChange={(swiper) => setCenterIndex(swiper.activeIndex)}
-            breakpoints={{
-              1024: {
-                slidesPerView: 3,
-              },
-              768: {
-                slidesPerView: 2,
-              },
-              480: {
-                slidesPerView: 1,
-              },
+            slidesPerView={"auto"}
+            loop={gallery.length > 2}
+            speed={600}
+            coverflowEffect={{
+              rotate: 0,
+              stretch: 0,
+              depth: 120,
+              modifier: 2.5,
+              slideShadows: false,
             }}
+            modules={[EffectCoverflow]}
           >
             {gallery.map((item, index) => {
               const imageUrl = imgSrc(item.imageLink, '');
@@ -141,9 +137,7 @@ const AwardsHome:FC = () => {
                   alt={item.description || `Gallery item ${index + 1}`}
                   width={500}
                   height={500}
-                  className={`w-full h-auto object-cover md:rounded-3xl rounded-2xl transition-all duration-500 ${
-                    index === centerIndex ? "scale-100 z-10" : "scale-90 z-0"
-                  }`}
+                  className="w-full h-auto object-cover md:rounded-3xl rounded-2xl"
                 />
               ) : (
                 <div className="w-full h-64 bg-gray-200 rounded-2xl flex items-center justify-center">
@@ -152,7 +146,7 @@ const AwardsHome:FC = () => {
               );
 
               return (
-                <SwiperSlide key={item.id || index}>
+                <SwiperSlide key={item.id || index} style={{ width: "55%", maxWidth: 360 }}>
                   {item.linkUrl ? (
                     <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
                       {imgEl}

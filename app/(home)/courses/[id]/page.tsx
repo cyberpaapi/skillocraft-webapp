@@ -448,14 +448,21 @@ export default function CoursePage() {
               </h2>
 
               <div className="space-y-3">
-                {course?.products && course.products.length > 0 && course.products.map((product,index) => (
+                {course?.products && course.products.length > 0 && course.products.map((product, index) => (
                   <details
                     key={index}
                     className="group bg-white rounded-xl overflow-hidden"
                   >
                     <summary className="flex justify-between items-center px-4 py-3 cursor-pointer list-none">
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-500 text-sm">{index + 1}</span>
+                        <span className="text-gray-400 text-sm font-medium w-5">{index + 1}</span>
+                        {product.thumbnail && (
+                          <img
+                            src={imgSrc(product.thumbnail)}
+                            alt=""
+                            className="w-12 h-8 rounded object-cover flex-shrink-0"
+                          />
+                        )}
                         <span className="font-medium text-gray-800">{product.name}</span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-500">
@@ -465,22 +472,42 @@ export default function CoursePage() {
                         <span className="transition-transform duration-300 group-open:rotate-90">▶️</span>
                       </div>
                     </summary>
-                    <div className="px-4 pb-4 text-sm text-gray-600">
-                      {product.description}
-                    </div>
+                    {product.description && (
+                      <div className="px-4 pb-4 text-sm text-gray-600">
+                        {product.description}
+                      </div>
+                    )}
                   </details>
                 ))}
               </div>
             </section>
             {/* Certificates */}
             <div className="mt-12">
-              <h3 className="text-lg font-semibold text-secondary mb-2">Online Certificates to <span className="text-primary">Prove Your Skills</span></h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-6">
-                <Image src="/certifiacte.png" alt="Certificate" width={300} height={200} className="rounded" />
-                <div className="col-span-2 text-sm">
-                  <p>✅ Official and Validated</p>
-                  <p>✨ Share with ease</p>
-                  <p>🏆 Gain recognition</p>
+              <h3 className="text-lg font-semibold text-secondary mb-4">Online Certificates to <span className="text-primary">Prove Your Skills</span></h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-6">
+                <Image src="/certifiacte.png" alt="Certificate" width={300} height={200} className="rounded-xl shadow" />
+                <div className="space-y-4 text-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">✅</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Official and Validated</p>
+                      <p className="text-gray-500 text-xs mt-0.5">Certificates are officially issued by Skillocraft and carry verifiable credentials.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">✨</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Share with Ease</p>
+                      <p className="text-gray-500 text-xs mt-0.5">Download and share your certificate on LinkedIn, resume, and social media.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🏆</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Gain Recognition</p>
+                      <p className="text-gray-500 text-xs mt-0.5">Stand out to employers and clients with industry-recognised proof of your skills.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -495,6 +522,7 @@ export default function CoursePage() {
                       Asked Questions
                     </span>
                   </h3>
+                  <p className="text-sm text-gray-500 mt-1">Get your queries answered right away</p>
                 </div>
                 {isLoadingFaqs ? (
                   <div className="space-y-4">
@@ -563,12 +591,18 @@ export default function CoursePage() {
             {/* Price Box */}
             <div className="bg-white rounded-2xl shadow p-4">
               <div className="flex items-center justify-between">
-                <div className="text-lg font-semibold text-gray-800">₹{course.price}</div>
-                <div className="text-sm bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">
-                  20% OFF
+                <div className="text-lg font-semibold text-gray-800">
+                  ₹{course.discountedPrice || course.price}
                 </div>
+                {course.discountedPrice && parseFloat(course.discountedPrice) < parseFloat(course.price) && (
+                  <div className="text-sm bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">
+                    {Math.round((1 - parseFloat(course.discountedPrice) / parseFloat(course.price)) * 100)}% OFF
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-gray-400 line-through mt-1">₹{course.price}</div>
+              {course.discountedPrice && parseFloat(course.discountedPrice) < parseFloat(course.price) && (
+                <div className="text-xs text-gray-400 line-through mt-1">₹{course.price}</div>
+              )}
               <button 
                 className="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 rounded disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={isPlacingOrder}
@@ -635,7 +669,9 @@ export default function CoursePage() {
                 {calculateTotalDuration(course?.products) && (
                   <li>⏱️ {calculateTotalDuration(course?.products)} total length</li>
                 )}
-                <li>🌐 English</li>
+                {course?.language && (
+                  <li>🌐 {course.language}</li>
+                )}
                 <li>💬 Doubt clearing session available</li>
               </ul>
             </div>

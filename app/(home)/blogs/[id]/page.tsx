@@ -45,7 +45,7 @@ export default function BlogDetailsPage() {
 
   return (
     <>
-      <HeroBlogInside />
+      <HeroBlogInside image={blogData?.image} title={blogData?.title} />
       <TaglineBlogInside />
       <BlogDetails {...blogData} />
       <FaqBlogDetails />
