@@ -4,7 +4,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { EffectCoverflow } from "swiper/modules";
+import { EffectCoverflow, Autoplay } from "swiper/modules";
 import { FC } from "react";
 import { axiosHomePublic } from "@/services/axiosHomeService";
 import { FeaturedBand } from "@/types";
@@ -132,6 +132,8 @@ const AwardsHome:FC = () => {
             centeredSlides={true}
             slidesPerView={"auto"}
             loop={gallery.length > 2}
+            loopAdditionalSlides={gallery.length}
+            initialSlide={gallery.length > 2 ? 1 : 0}
             speed={600}
             coverflowEffect={{
               rotate: 0,
@@ -140,7 +142,8 @@ const AwardsHome:FC = () => {
               modifier: 2.5,
               slideShadows: false,
             }}
-            modules={[EffectCoverflow]}
+            autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            modules={[EffectCoverflow, Autoplay]}
           >
             {gallery.map((item, index) => {
               const imageUrl = imgSrc(item.imageLink, '');
