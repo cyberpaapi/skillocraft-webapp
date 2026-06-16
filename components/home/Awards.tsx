@@ -126,6 +126,11 @@ const AwardsHome:FC = () => {
 
         {/* Image Carousel */}
         <div className="max-w-3xl mx-auto space-y-5">
+          {gallery.length > 0 && (() => {
+            // Pre-duplicate so Swiper always has 9+ real slides — eliminates loop clone gaps
+            const minCopies = Math.ceil(9 / gallery.length);
+            const slides = Array.from({ length: minCopies }, () => gallery).flat();
+            return (
           <div className="overflow-hidden">
           <Swiper
             key={gallery.length}
@@ -133,8 +138,7 @@ const AwardsHome:FC = () => {
             grabCursor={true}
             centeredSlides={true}
             slidesPerView={3}
-            loop={gallery.length >= 3}
-            loopAdditionalSlides={gallery.length}
+            loop={true}
             speed={600}
             coverflowEffect={{
               rotate: 0,
@@ -146,32 +150,30 @@ const AwardsHome:FC = () => {
             autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
             modules={[EffectCoverflow, Autoplay]}
           >
-            {gallery.map((item, index) => {
+            {slides.map((item, index) => {
               const imageUrl = imgSrc(item.imageLink, '');
-              const imgEl = imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={item.description || `Gallery item ${index + 1}`}
-                  className="w-full h-auto md:rounded-3xl rounded-2xl"
-                />
-              ) : (
-                <div className="w-full h-64 bg-gray-200 rounded-2xl flex items-center justify-center">
-                  <span className="text-gray-500">No image</span>
-                </div>
-              );
-
               return (
-                <SwiperSlide key={item.id || index}>
-                  {item.linkUrl ? (
-                    <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
-                      {imgEl}
-                    </a>
-                  ) : imgEl}
+                <SwiperSlide key={`${item.id}-${index}`}>
+                  {imageUrl ? (
+                    item.linkUrl ? (
+                      <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                        <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="w-full h-auto md:rounded-3xl rounded-2xl" />
+                      </a>
+                    ) : (
+                      <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="w-full h-auto md:rounded-3xl rounded-2xl" />
+                    )
+                  ) : (
+                    <div className="w-full h-48 bg-gray-200 rounded-2xl flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">No image</span>
+                    </div>
+                  )}
                 </SwiperSlide>
               );
             })}
           </Swiper>
           </div>
+            );
+          })()}
 
           {/* Admin-managed Logos */}
           {logos.length > 0 && (

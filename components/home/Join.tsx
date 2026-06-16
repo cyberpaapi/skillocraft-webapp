@@ -26,8 +26,8 @@ const JoinHome:FC = () => {
       <div className="container mx-auto">
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           {/* Phone mockup on the left */}
-          <div className="flex items-center justify-center lg:justify-end">
-            <div className="relative w-36 sm:w-40 lg:w-44">
+          <div className="flex items-center justify-center">
+            <div className="relative w-28 sm:w-32 lg:w-36">
               <Image
                 src="/phone-mockup.png"
                 width={400}
