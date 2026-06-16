@@ -125,21 +125,21 @@ const AwardsHome:FC = () => {
         </div>
 
         {/* Image Carousel */}
-        <div className="max-w-3xl mx-auto space-y-5 overflow-hidden">
+        <div className="max-w-3xl mx-auto space-y-5">
+          <div className="overflow-hidden">
           <Swiper
+            key={gallery.length}
             effect="coverflow"
             grabCursor={true}
             centeredSlides={true}
-            slidesPerView={"auto"}
-            loop={gallery.length > 2}
-            loopAdditionalSlides={gallery.length}
-            initialSlide={gallery.length > 2 ? 1 : 0}
+            slidesPerView={3}
+            loop={gallery.length >= 3}
             speed={600}
             coverflowEffect={{
               rotate: 0,
               stretch: 0,
-              depth: 120,
-              modifier: 2.5,
+              depth: 150,
+              modifier: 1.8,
               slideShadows: false,
             }}
             autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
@@ -162,7 +162,7 @@ const AwardsHome:FC = () => {
               );
 
               return (
-                <SwiperSlide key={item.id || index} style={{ width: "55%", maxWidth: 360 }}>
+                <SwiperSlide key={item.id || index}>
                   {item.linkUrl ? (
                     <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
                       {imgEl}
@@ -172,6 +172,7 @@ const AwardsHome:FC = () => {
               );
             })}
           </Swiper>
+          </div>
 
           {/* Admin-managed Logos */}
           {logos.length > 0 && (
