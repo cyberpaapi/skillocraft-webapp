@@ -11,6 +11,7 @@ import { FeaturedBand } from "@/types";
 import { imgSrc } from "@/lib/imgSrc";
 
 interface FeatureGallery { id: string; imageLink: string; description?: string; linkUrl?: string; }
+interface LogoItem { url: string; link: string; }
 
 // const slides = [
 //   "/awards/a1.jpg",
@@ -36,7 +37,7 @@ interface FeatureGallery { id: string; imageLink: string; description?: string; 
 const AwardsHome:FC = () => {
   const [brands, setBrands] = useState<FeaturedBand[]>([]);
   const [gallery, setGallery] = useState<FeatureGallery[]>([]);
-  const [logos, setLogos] = useState<string[]>([]);
+  const [logos, setLogos] = useState<LogoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,7 +79,13 @@ const AwardsHome:FC = () => {
         const res = await axiosHomePublic.get('/site-settings?keys=awards_logos');
         const val = res.data?.data?.awards_logos;
         if (val) {
-          try { setLogos(JSON.parse(val)); } catch { setLogos([]); }
+          try {
+            const parsed = JSON.parse(val);
+            const normalized: LogoItem[] = (Array.isArray(parsed) ? parsed : []).map((item: any) =>
+              typeof item === 'string' ? { url: item, link: '' } : { url: item.url || '', link: item.link || '' }
+            );
+            setLogos(normalized);
+          } catch { setLogos([]); }
         }
       } catch {}
     };
@@ -149,6 +156,7 @@ const AwardsHome:FC = () => {
             }}
             autoplay={{ delay: 2500, disableOnInteraction: false, pauseOnMouseEnter: true }}
             modules={[EffectCoverflow, Autoplay]}
+            className="!overflow-hidden"
           >
             {slides.map((item, index) => {
               const imageUrl = imgSrc(item.imageLink, '');
@@ -179,15 +187,22 @@ const AwardsHome:FC = () => {
           {logos.length > 0 && (
             <div className="flex items-center flex-wrap md:gap-4 gap-3">
               <div className="flex flex-wrap md:gap-3 gap-2">
-                {logos.map((url, i) => (
-                  <div key={i} className="md:size-14 size-10">
+                {logos.map((logo, i) => {
+                  const img = (
                     <img
-                      src={imgSrc(url, '')}
+                      src={imgSrc(logo.url, '')}
                       alt={`Logo ${i + 1}`}
                       className="w-full h-full rounded-full border border-gray-100 object-cover shadow-md"
                     />
-                  </div>
-                ))}
+                  );
+                  return logo.link ? (
+                    <a key={i} href={logo.link} target="_blank" rel="noopener noreferrer" className="md:size-14 size-10 block">
+                      {img}
+                    </a>
+                  ) : (
+                    <div key={i} className="md:size-14 size-10">{img}</div>
+                  );
+                })}
               </div>
             </div>
           )}
