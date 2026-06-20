@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import LiveHeroCarousel from "@/components/live/LiveHeroCarousel";
+import CreatorHome from "@/components/home/Creators";
 import { FiSearch, FiMapPin, FiStar, FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { IoCalendarOutline } from "react-icons/io5";
 import { axiosHomePublic } from "@/services/axiosHomeService";
@@ -48,13 +49,16 @@ const OUTDOOR_EVENTS = [
   { id: 4, tile: 8, title: "Music & Performance Night", category: "Live", date: "Sat, 18 May", image: "" },
 ];
 
-const CREATORS = [
-  { id: 1, name: "Reshmi Yadav", role: "Professional Baker & Pastry Expert", bio: "Award-winning pastry chef with 15+ years of experience in baking and confectionery arts.", initial: "R" },
-  { id: 2, name: "Nishant Dave", role: "Fragrance Expert & Perfumer", bio: "Certified master perfumer who has created over 50 signature fragrances for top brands.", initial: "N" },
-  { id: 3, name: "Dakshya Shastri", role: "Art Instructor & Creative Director", bio: "Renowned artist and educator with an international portfolio spanning 12 countries.", initial: "D" },
-];
+interface LiveFAQ { question: string; answer: string; }
 
-interface GeneralFAQ { id: string; question: string; answer: string; }
+const DEFAULT_OFFLINE_FAQS: LiveFAQ[] = [
+  { question: "Hands-on, in-person learning", answer: "Practise live with mentors and get instant, personal feedback you can't get online." },
+  { question: "Network with the community", answer: "Meet fellow learners, creators and industry experts face to face and build lasting connections." },
+];
+const DEFAULT_ONLINE_FAQS: LiveFAQ[] = [
+  { question: "Learn from anywhere", answer: "Join live sessions from the comfort of your home — no travel, no location limits." },
+  { question: "Flexible and affordable", answer: "Attend interactive live classes at a fraction of the cost of offline events." },
+];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
@@ -124,7 +128,8 @@ export default function LivePage() {
   const [selectedCity, setSelectedCity] = useState("All Cities");
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [apiEvents, setApiEvents] = useState<ApiEvent[]>([]);
-  const [faqs, setFaqs] = useState<GeneralFAQ[]>([]);
+  const [offlineFaqs, setOfflineFaqs] = useState<LiveFAQ[]>(DEFAULT_OFFLINE_FAQS);
+  const [onlineFaqs, setOnlineFaqs] = useState<LiveFAQ[]>(DEFAULT_ONLINE_FAQS);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,10 +139,17 @@ export default function LivePage() {
         setApiEvents(list);
       })
       .catch(() => {});
-    axiosHomePublic.get("/general-faqs")
+    axiosHomePublic.get("/site-settings?keys=live_offline_faqs,live_online_faqs")
       .then(({ data }) => {
-        const list: GeneralFAQ[] = data?.data || [];
-        setFaqs(list);
+        const d = data?.data || {};
+        try {
+          const off = d.live_offline_faqs ? JSON.parse(d.live_offline_faqs) : null;
+          if (Array.isArray(off) && off.length > 0) setOfflineFaqs(off);
+        } catch {}
+        try {
+          const on = d.live_online_faqs ? JSON.parse(d.live_online_faqs) : null;
+          if (Array.isArray(on) && on.length > 0) setOnlineFaqs(on);
+        } catch {}
       })
       .catch(() => {});
   }, []);
@@ -434,24 +446,10 @@ export default function LivePage() {
         );
       })()}
 
-      {/* Popular Creators */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
-          Popular <span className="text-primary">Creator</span> of Skillocraft
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {CREATORS.map((creator) => (
-            <div key={creator.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm text-center hover:shadow-md transition-shadow">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-                {creator.initial}
-              </div>
-              <h3 className="font-bold text-gray-900 text-sm">{creator.name}</h3>
-              <p className="text-xs text-primary font-medium mt-1">{creator.role}</p>
-              <p className="text-xs text-gray-500 mt-2 leading-relaxed">{creator.bio}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Popular Creators — same component as the homepage */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <CreatorHome />
+      </div>
 
       {/* Gallery */}
       <section className="bg-gray-50 py-10">
@@ -469,21 +467,31 @@ export default function LivePage() {
         </div>
       </section>
 
-      {/* FAQs */}
-      {faqs.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-          <h2 className="text-xl font-bold text-gray-900 mb-5">
-            Frequently Asked <span className="text-primary">Questions</span>
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {[faqs.slice(0, Math.ceil(faqs.length / 2)), faqs.slice(Math.ceil(faqs.length / 2))].map((group, gi) => (
-              <div key={gi} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                {group.map((faq) => <FAQItem key={faq.id} question={faq.question} answer={faq.answer} />)}
-              </div>
-            ))}
+      {/* Why attend — Offline vs Online, side by side */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">
+              Why you should attend <span className="text-primary">Offline events</span>
+            </h2>
+            {offlineFaqs.length > 0 ? (
+              offlineFaqs.map((faq, i) => <FAQItem key={i} question={faq.question} answer={faq.answer} />)
+            ) : (
+              <p className="text-sm text-gray-400 py-3">Details coming soon.</p>
+            )}
           </div>
-        </section>
-      )}
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">
+              Why you should attend <span className="text-primary">Online events</span>
+            </h2>
+            {onlineFaqs.length > 0 ? (
+              onlineFaqs.map((faq, i) => <FAQItem key={i} question={faq.question} answer={faq.answer} />)
+            ) : (
+              <p className="text-sm text-gray-400 py-3">Details coming soon.</p>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

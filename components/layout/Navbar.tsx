@@ -20,7 +20,7 @@ import {
 
 // import { FaFacebookF, FaApple } from "react-icons/fa";
 // import { FcGoogle } from "react-icons/fc";
-import { IoMenu, IoClose, IoCart, IoNotificationsOutline } from "react-icons/io5";
+import { IoMenu, IoClose, IoCart, IoNotificationsOutline, IoLogOutOutline, IoPersonOutline } from "react-icons/io5";
 import { useAuth } from "@/context/AuthContext";
 import { useModal } from "@/context/ModalContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
@@ -439,61 +439,57 @@ const Navbar: React.FC = () => {
         </ul>
         {/* Mobile Menu - Logged In */}
         {isLoggedIn ? (
-          <div className="w-full px-4 py-2">
-            {/* User Info */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {(user?.name || 'U').charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium text-sm">{user?.name || 'User'}</p>
-                  <p className="text-xs text-gray-500">{user?.email || ''}</p>
-                </div>
+          <div className="w-full px-4 pb-4 pt-2 mt-2 border-t border-gray-100">
+            {/* Account card */}
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl mb-3">
+              <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+                <AvatarFallback className="bg-primary text-white text-base font-semibold">
+                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-secondary truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
               </div>
-              <button 
-                onClick={logout}
-                className="text-sm text-red-600 hover:text-red-700"
-              >
-                Logout
-              </button>
             </div>
-            
-            {/* Mobile Navigation Icons */}
-            <div className="flex justify-around py-3 border-t border-gray-100">
-              <Link href="/cart" className="flex flex-col items-center text-xs text-gray-600">
-                <div className="relative p-1.5">
+
+            {/* Quick actions */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <Link href="/profile" onClick={toggleSidebar} className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors">
+                <IoPersonOutline className="h-5 w-5" />
+                <span className="text-[11px] font-medium">Profile</span>
+              </Link>
+              <Link href="/cart" onClick={toggleSidebar} className="relative flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors">
+                <div className="relative">
                   <IoCart className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]">
-                    {navbarData?.cartCount || 0}
-                  </Badge>
+                  {(navbarData?.cartCount || 0) > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-[10px]">
+                      {navbarData?.cartCount || 0}
+                    </Badge>
+                  )}
                 </div>
-                <span className="text-[11px]">Cart</span>
+                <span className="text-[11px] font-medium">Cart</span>
               </Link>
-              
-              <button className="flex flex-col items-center text-xs text-gray-600">
-                <div className="relative p-1.5">
+              <button className="relative flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors">
+                <div className="relative">
                   <IoNotificationsOutline className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px] bg-red-500">
-                    {navbarData?.notificationCount || 0}
-                  </Badge>
+                  {(navbarData?.notificationCount || 0) > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-[10px] bg-red-500">
+                      {navbarData?.notificationCount || 0}
+                    </Badge>
+                  )}
                 </div>
-                <span className="text-[11px]">Alerts</span>
+                <span className="text-[11px] font-medium">Alerts</span>
               </button>
-              
-              <Link href="/profile" className="flex flex-col items-center text-xs text-gray-600">
-                <div className="p-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">
-                      {(user?.name || 'U').charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <span>Profile</span>
-              </Link>
             </div>
+
+            {/* Logout */}
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-medium text-sm transition-colors"
+            >
+              <IoLogOutOutline className="h-5 w-5" /> Logout
+            </button>
           </div>
         ) : (
           /* Mobile Menu - Logged Out */

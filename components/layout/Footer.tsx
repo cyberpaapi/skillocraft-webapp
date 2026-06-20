@@ -1,12 +1,61 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { axiosHomePublic } from "@/services/axiosHomeService";
 
-import { FaFacebookF, FaXTwitter, FaSquareInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa6";
+import { FaFacebookF, FaSquareInstagram, FaXTwitter, FaLinkedinIn } from "react-icons/fa6";
+
+const DEFAULT_FACEBOOK = "https://www.facebook.com/share/18ZZYLM3Af/";
+const DEFAULT_INSTAGRAM = "https://www.instagram.com/skillocraft";
+
+// Main navigation windows (mirrors the navbar tabs)
+const NAV_LINKS = [
+  { label: "Courses", href: "/courses" },
+  { label: "Success Stories", href: "/success" },
+  { label: "Refer & Earn", href: "/referral" },
+  { label: "Skillocraft Live", href: "/live" },
+  { label: "Marketplace", href: "/marketplace" },
+  { label: "Blogs", href: "/blogs" },
+];
+
+const WE_PROVIDE = [
+  "Online recorded courses",
+  "Online workshops",
+  "Outdoor events & Seminars",
+  "Marketplace products",
+  "Affiliate earning",
+];
+
+const EXCELLENCE = [
+  "DPIIT Recognized",
+  "ISO Certified",
+  "Skill India Mission",
+  "MSME Approved",
+];
 
 const Footer: React.FC = () => {
+  const [facebookUrl, setFacebookUrl] = useState(DEFAULT_FACEBOOK);
+  const [instagramUrl, setInstagramUrl] = useState(DEFAULT_INSTAGRAM);
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+
+  useEffect(() => {
+    axiosHomePublic
+      .get("/site-settings?keys=footer_facebook_url,footer_instagram_url,footer_twitter_url,footer_linkedin_url")
+      .then(({ data }) => {
+        const d = data?.data || {};
+        if (d.footer_facebook_url) setFacebookUrl(d.footer_facebook_url);
+        if (d.footer_instagram_url) setInstagramUrl(d.footer_instagram_url);
+        if (d.footer_twitter_url) setTwitterUrl(d.footer_twitter_url);
+        if (d.footer_linkedin_url) setLinkedinUrl(d.footer_linkedin_url);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <footer className="bg-[#111438] text-white">
       <div className="container mx-auto">
@@ -21,23 +70,20 @@ const Footer: React.FC = () => {
               className="md:h-16 h-12 w-auto"
             />
             <p className="md:text-base text-sm font-light text-gray-300">
-              when an unknown printer took galley of type and scrambled it to make pspecimen bookt has.
+              Follows us below!
             </p>
             <div className="flex items-center gap-4">
-              <Link href="/" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
+              <Link href={facebookUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
                 <FaFacebookF className="size-4" />
               </Link>
-              <Link href="/" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
+              <Link href={twitterUrl || "#"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
                 <FaXTwitter className="size-4" />
               </Link>
-              <Link href="/" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
+              <Link href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
                 <FaSquareInstagram className="size-4" />
               </Link>
-              <Link href="/" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
+              <Link href={linkedinUrl || "#"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
                 <FaLinkedinIn className="size-4" />
-              </Link>
-              <Link href="/" className="inline-flex items-center justify-center md:size-8 size-6 rounded-lg text-white hover:text-primary hover:bg-white/5  transition ease-in-out delay-150 duration-300">
-                <FaYoutube className="size-4" />
               </Link>
             </div>
           </div>
@@ -58,11 +104,11 @@ const Footer: React.FC = () => {
                 <span className="block text-sm font-semibold group-hover:text-primary">contact@skillocraft.com</span>
               </div>
             </Link>
-            <Link href="/" className="flex gap-2 items-center group transition ease-in-out delay-150 duration-300">
+            <Link href="tel:+918981126404" className="flex gap-2 items-center group transition ease-in-out delay-150 duration-300">
               <span className="inline-flex items-center justify-center size-10 rounded-md bg-white">
                 <Image
                   src="/icons/phone.svg"
-                  alt="Email"
+                  alt="Phone"
                   width={500}
                   height={500}
                   className="size-6"
@@ -70,7 +116,7 @@ const Footer: React.FC = () => {
               </span>
               <div>
                 <span className="block text-sm font-light text-gray-300">Phone:</span>
-                <span className="block text-sm font-semibold group-hover:text-primary">(+91) 6687 - 5892</span>
+                <span className="block text-sm font-semibold group-hover:text-primary">+91 8981126404</span>
               </div>
             </Link>
           </div>
@@ -79,63 +125,29 @@ const Footer: React.FC = () => {
         {/* Footer Middle */}
         <div className="flex flex-wrap justify-between gap-8 py-16">
           <div className="space-y-4">
-            <h6 className="text-base font-semibold">About us</h6>
+            <h6 className="text-base font-semibold">Explore</h6>
             <ul className="md:text-sm text-xs space-y-2">
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Mission</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Our team</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Awards</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Testimonials</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">About Mentor</Link>
-              </li>
+              {NAV_LINKS.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">{item.label}</Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div className="space-y-4">
-            <h6 className="text-base font-semibold">Online classes</h6>
+            <h6 className="text-base font-semibold">We provide</h6>
             <ul className="md:text-sm text-xs space-y-2">
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Online science classes</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Online mathematics classes</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Online computer classes</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Online statistics classes</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Online geographic classes</Link>
-              </li>
+              {WE_PROVIDE.map((item) => (
+                <li key={item} className="font-light text-gray-300">{item}</li>
+              ))}
             </ul>
           </div>
           <div className="space-y-4">
-            <h6 className="text-base font-semibold">Courses</h6>
+            <h6 className="text-base font-semibold">Committed to excellence</h6>
             <ul className="md:text-sm text-xs space-y-2">
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Web design</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Web development</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Mobile design</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">UI/UX design</Link>
-              </li>
-              <li>
-                <Link href="/" className="font-light text-gray-300 hover:text-primary transition ease-in-out delay-150 duration-300">Branding design</Link>
-              </li>
+              {EXCELLENCE.map((item) => (
+                <li key={item} className="font-light text-gray-300">{item}</li>
+              ))}
             </ul>
           </div>
         </div>

@@ -6,6 +6,15 @@ import Link from "next/link";
 import { BlogDetailsResponseData } from "@/types";
 // import { Skeleton } from "@/components/ui/skeleton";
 
+// Format an ISO timestamp as "HH:MM ,DD-MM-YY"
+const formatBlogDate = (value?: string) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())} ,${p(d.getDate())}-${p(d.getMonth() + 1)}-${p(d.getFullYear() % 100)}`;
+};
+
 
 const BlogDetails = ({
   title,
@@ -79,7 +88,7 @@ const BlogDetails = ({
 
         {/* Content */}
         <div className="max-w-4xl mx-auto space-y-4 md:px-8 px-0">
-          <div className="text-sm">{createdAt}</div>
+          <div className="text-sm text-gray-500">{formatBlogDate(createdAt)}</div>
 
           {/* Image Sec */}
             <Image

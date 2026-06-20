@@ -231,6 +231,10 @@ export interface CourseDetails {
   longDescription: string;
   price: string;
   discountedPrice?: string | null;
+  lectures?: string | null;
+  duration?: string | null;
+  recommended?: boolean;
+  certificate?: string | null;
   language?: string;
   status: Status;
   creator: Creator;
@@ -258,7 +262,17 @@ export interface CourseDetails {
     featured: boolean,
     rating: number,
     totalLessons: number
-  }[]
+  }[];
+  recommendedCourses?: {
+    id: string;
+    name: string;
+    image: string | null;
+    shortDescription: string;
+    price: string;
+    discountedPrice?: string | null;
+    language: string;
+    creatorName: string;
+  }[];
 }
 
 export interface Review {
@@ -268,16 +282,20 @@ export interface Review {
 
 export interface ReviewData {
   id: string;
-  rating: number;
-  comment: string;
-  customer: {
+  ratting: number;
+  details: string;
+  reviewerName?: string | null;
+  // legacy aliases (kept optional for backward compatibility)
+  rating?: number;
+  comment?: string;
+  customer?: {
     id: string;
     name: string; // This contains the customer email
     user: {
       id: string;
       avatarUrl: string | null;
     };
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

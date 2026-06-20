@@ -66,6 +66,14 @@ export default function ContentMain() {
   const [activeTab, setActiveTab] = useState<TabKey>('courses');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Coupon / referral code state
+  const [codeInput, setCodeInput] = useState('');
+  const [applyingCode, setApplyingCode] = useState(false);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [discount, setDiscount] = useState(0);
+  const [discountLabel, setDiscountLabel] = useState('');
+  const [codeError, setCodeError] = useState('');
+
   const { data: cartData, isLoading: cartLoading, refetch } = useQuery<CartResponse>({
     queryKey: ['cart'],
     queryFn: async () => {
@@ -95,19 +103,57 @@ export default function ContentMain() {
   };
 
   const courseTotal = cartData?.courses?.reduce((s, i) => s + parseFloat(i.price), 0) ?? 0;
-  const grandTotal = courseTotal;
+  const grandTotal = Math.max(0, courseTotal - discount);
+
+  const applyCode = async () => {
+    const code = codeInput.trim();
+    setCodeError('');
+    if (!code) { setCodeError('Enter a coupon or referral code'); return; }
+    if (!cartData?.courses?.length) { setCodeError('Your cart is empty'); return; }
+    setApplyingCode(true);
+    try {
+      const { data } = await axiosHomeProtected.post('/checkout/validate-code', {
+        code,
+        cartIds: cartData.courses.map(c => c.id),
+      });
+      if (data?.valid && data?.data?.applied) {
+        setDiscount(Number(data.data.discount) || 0);
+        setDiscountLabel(data.data.applied.label || 'Discount applied');
+        setAppliedCode(code);
+        toast.success('Code applied!');
+      } else {
+        setDiscount(0);
+        setAppliedCode(null);
+        setDiscountLabel('');
+        setCodeError(data?.message || 'Invalid code');
+      }
+    } catch (err: any) {
+      setCodeError(err?.response?.data?.message || 'Failed to apply code');
+    } finally {
+      setApplyingCode(false);
+    }
+  };
+
+  const removeCode = () => {
+    setAppliedCode(null);
+    setDiscount(0);
+    setDiscountLabel('');
+    setCodeInput('');
+    setCodeError('');
+  };
 
   const handleCheckout = async () => {
     if (!cartData?.courses?.length) return;
     setIsProcessing(true);
     try {
-      // Step 1: Create Razorpay order on backend
+      // Step 1: Create Razorpay order on backend (server computes the authoritative amount + discount)
       const { data: orderData } = await axiosHomeProtected.post('/razorpay/course-order', {
         cartIds: cartData.courses.map(c => c.id),
-        totalAmount: courseTotal.toFixed(2),
+        code: appliedCode || undefined,
       });
 
-      const { orderId, amount, currency, keyId } = orderData.data;
+      const { orderId, amount, currency, keyId, totalAmount: serverTotal } = orderData.data;
+      const chargedTotal = serverTotal ?? grandTotal.toFixed(2);
       const cartIds = cartData.courses.map(c => c.id);
 
       // Step 2: Load Razorpay script
@@ -131,7 +177,7 @@ export default function ContentMain() {
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
               cartIds,
-              totalAmount: courseTotal.toFixed(2),
+              totalAmount: chargedTotal,
             });
             if (verifyData.status === 1) {
               invalidateNavbarData();
@@ -341,6 +387,15 @@ export default function ContentMain() {
               </span>
               <span className="text-xs text-gray-400">(registered)</span>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                  Discount{discountLabel ? ` (${discountLabel})` : ''}
+                </span>
+                <span>−₹{discount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="border-t pt-3">
               <div className="flex justify-between font-semibold text-gray-800 text-base">
                 <span>Total</span>
@@ -348,6 +403,43 @@ export default function ContentMain() {
               </div>
             </div>
           </div>
+
+          {/* Coupon / Referral code */}
+          {courses.length > 0 && (
+            <div className="mt-4">
+              {appliedCode ? (
+                <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                  <span className="text-sm text-emerald-700 font-medium truncate">
+                    ✓ {appliedCode.toUpperCase()} applied
+                  </span>
+                  <button onClick={removeCode} className="text-xs text-emerald-700 hover:underline font-medium">
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={codeInput}
+                      onChange={(e) => setCodeInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && applyCode()}
+                      placeholder="Coupon or referral code"
+                      className="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                    <button
+                      onClick={applyCode}
+                      disabled={applyingCode}
+                      className="px-4 py-2 bg-secondary text-white rounded-xl text-sm font-medium hover:bg-secondary/90 disabled:opacity-60 flex-shrink-0"
+                    >
+                      {applyingCode ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {codeError && <p className="text-xs text-red-500 mt-1.5">{codeError}</p>}
+                </>
+              )}
+            </div>
+          )}
 
           {courses.length > 0 && (
             <button

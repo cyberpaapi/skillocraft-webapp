@@ -18,6 +18,20 @@ function CoursesContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load the full category list once (independent of course filtering) so the
+  // filter dropdown always has every category and can resolve the selected one.
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axiosHomePublic.get<{ data: Category[] }>('/categories');
+        if (Array.isArray(res.data?.data)) setCategories(res.data.data);
+      } catch {
+        // non-fatal — dropdown just won't be populated
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     const fetchCourses = async () => {
       setIsLoading(true);
@@ -56,12 +70,6 @@ function CoursesContent() {
 
         //setCourses(fetchedCourses);
         setFilteredCourses(fetchedCourses);
-
-        // Extract unique categories for filter
-        const uniqueCategories = Array.from(
-          new Map(fetchedCourses.map(course => [course.category.id, course.category])).values()
-        );
-        setCategories(uniqueCategories);
 
       } catch (err) {
         const e = err as { response?: { data?: { message?: string } } };

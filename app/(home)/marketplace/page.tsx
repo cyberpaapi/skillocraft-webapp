@@ -23,9 +23,24 @@ export interface MarketplaceProduct {
   specifications?: string;
   importantNote?: string;
   deliveryInfo?: string;
+  featured?: boolean;
+  bestSelling?: boolean;
   status?: string;
   _dummy?: boolean;
 }
+
+interface MarketplaceCategory { id: string; name: string; imageUrl?: string | null; }
+interface BannerData { badge: string; title: string; subtitle: string; cta: string; ctaLink: string; bgImage: string; }
+
+const TILE_PALETTE = [
+  "from-orange-500/80 to-amber-600/80",
+  "from-pink-500/80 to-rose-600/80",
+  "from-violet-500/80 to-purple-600/80",
+  "from-teal-500/80 to-emerald-600/80",
+  "from-blue-500/80 to-indigo-600/80",
+  "from-red-500/80 to-orange-600/80",
+];
+const TILE_FALLBACK_IMAGES = ["/courses_1.png", "/courses_2.png", "/courses_5.png", "/courses_4.png", "/courses_3.png", "/courses_6.png"];
 
 // ─── Dummy data (fallback when API unavailable) ────────────────────────────────
 
@@ -44,17 +59,12 @@ const DUMMY_PRODUCTS: MarketplaceProduct[] = [
   { id: "mp-12", name: "Argan Oil Hair Treatment Kit", images: ["/courses_6.png", "/courses_4.png"], price: "749", originalPrice: "1499", discount: "50", category: "Skincare", highlights: [{ key: "Type", value: "Hair Care" }, { key: "Material", value: "Argan Oil" }, { key: "Pack", value: "Complete Kit" }], description: "Restore shine and strength to damaged hair naturally.", _dummy: true },
 ];
 
-const CATEGORY_TILES = [
-  { name: "Baking", image: "/courses_1.png", color: "from-orange-500/80 to-amber-600/80" },
-  { name: "Skincare", image: "/courses_2.png", color: "from-pink-500/80 to-rose-600/80" },
-  { name: "Artificial Jewellery", image: "/courses_5.png", color: "from-violet-500/80 to-purple-600/80" },
-  { name: "Hand Craft", image: "/courses_4.png", color: "from-teal-500/80 to-emerald-600/80" },
+const DEFAULT_BANNERS: BannerData[] = [
+  { badge: "New Launch", title: "Start Your Own Perfume Brand", subtitle: "Professional Perfume Making Course at just ₹699/-", cta: "Join Now", ctaLink: "", bgImage: "" },
+  { badge: "Number One", title: "Skill-Tech Platform in India", subtitle: "Login and Start Your Learning Now", cta: "Login", ctaLink: "", bgImage: "" },
 ];
-
-const HERO_BANNERS = [
-  { id: 1, bg: "from-orange-900 to-amber-800", badge: "New Launch", title: "Start Your Own Perfume Brand", subtitle: "Professional Perfume Making Course at just ₹699/-", cta: "Join Now", image: "/courses_3.png" },
-  { id: 2, bg: "from-primary to-indigo-700", badge: "Number One", title: "Skill-Tech Platform in India", subtitle: "Login and Start Your Learning Now", cta: "Login", image: "/courses_2.png" },
-];
+const BANNER_BG = ["from-orange-900 to-amber-800", "from-primary to-indigo-700"];
+const BANNER_FALLBACK_IMG = ["/courses_3.png", "/courses_2.png"];
 
 // ─── Small Product Card ────────────────────────────────────────────────────────
 
@@ -68,6 +78,11 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
         {parseInt(product.discount) > 0 && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
             {product.discount}% OFF
+          </span>
+        )}
+        {product.bestSelling && (
+          <span className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            BEST SELLER
           </span>
         )}
       </div>
@@ -107,9 +122,10 @@ function HorizontalScroll({ products }: { products: MarketplaceProduct[] }) {
 
 export default function MarketplacePage() {
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
+  const [categories, setCategories] = useState<MarketplaceCategory[]>([]);
+  const [banners, setBanners] = useState<BannerData[]>(DEFAULT_BANNERS);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [skincareCarouselIdx, setSkincareCarouselIdx] = useState(0);
   const [offersCarouselIdx, setOffersCarouselIdx] = useState(0);
 
   useEffect(() => {
@@ -121,15 +137,26 @@ export default function MarketplacePage() {
       })
       .catch(() => setProducts(DUMMY_PRODUCTS))
       .finally(() => setLoading(false));
-  }, []);
 
-  // Skincare big-image carousel
-  const skincare = products.filter(p => ["skincare", "makeup", "beauty", "skin"].some(k => p.category.toLowerCase().includes(k)));
-  useEffect(() => {
-    if (skincare.length < 2) return;
-    const t = setInterval(() => setSkincareCarouselIdx(i => (i + 1) % skincare.length), 3000);
-    return () => clearInterval(t);
-  }, [skincare.length]);
+    axiosHomePublic.get("/marketplace-categories")
+      .then(({ data }) => {
+        const list: MarketplaceCategory[] = data?.data || [];
+        if (list.length > 0) setCategories(list);
+      })
+      .catch(() => {});
+
+    axiosHomePublic.get("/site-settings?keys=marketplace_banners")
+      .then(({ data }) => {
+        const raw = data?.data?.marketplace_banners;
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length === 2) setBanners(parsed);
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Top offers big-image carousel
   const offers = [...products].sort((a, b) => parseInt(b.discount) - parseInt(a.discount));
@@ -139,9 +166,28 @@ export default function MarketplacePage() {
     return () => clearInterval(t);
   }, [offers.length]);
 
-  const byCategory = useCallback((cat: string) => products.filter(p => p.category.toLowerCase().includes(cat.toLowerCase())), [products]);
+  // Best Selling: admin-flagged, fall back to biggest discounts
+  const flaggedBestSelling = products.filter(p => p.bestSelling);
+  const bestSellingProducts = flaggedBestSelling.length > 0
+    ? flaggedBestSelling
+    : [...products].sort((a, b) => parseInt(b.discount) - parseInt(a.discount)).slice(0, 10);
 
-  const bakingProducts = byCategory("baking");
+  // Featured overall (admin-selected)
+  const featuredProducts = products.filter(p => p.featured);
+
+  // Products of a category, featured first
+  const productsOfCategory = useCallback(
+    (catName: string) =>
+      products
+        .filter(p => p.category.toLowerCase() === catName.toLowerCase())
+        .sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)),
+    [products]
+  );
+
+  // Categories that actually have products (drives per-category rows)
+  const categoryNames = categories.length > 0
+    ? categories.map(c => c.name)
+    : Array.from(new Set(products.map(p => p.category)));
 
   const filtered = search
     ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
@@ -153,19 +199,26 @@ export default function MarketplacePage() {
       {/* ── Hero Banners ─────────────────────────────────────────────── */}
       <section className="w-full px-3 sm:px-5 py-4">
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {HERO_BANNERS.map((banner) => (
-            <div key={banner.id} className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${banner.bg} min-h-[140px] sm:min-h-[200px] flex items-end p-4 sm:p-6`}>
-              <div className="absolute inset-0 opacity-20">
-                <Image src={banner.image} alt="" fill className="object-cover" />
+          {banners.map((banner, idx) => {
+            const bg = banner.bgImage ? imgSrc(banner.bgImage) : BANNER_FALLBACK_IMG[idx] || BANNER_FALLBACK_IMG[0];
+            return (
+              <div key={idx} className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${BANNER_BG[idx] || BANNER_BG[0]} min-h-[140px] sm:min-h-[200px] flex items-end p-4 sm:p-6`}>
+                <div className="absolute inset-0 opacity-20">
+                  <Image src={bg} alt="" fill unoptimized className="object-cover" />
+                </div>
+                <div className="relative z-10">
+                  {banner.badge && <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full mb-2">{banner.badge}</span>}
+                  <h2 className="text-white font-bold text-sm sm:text-xl leading-tight mb-1">{banner.title}</h2>
+                  <p className="text-white/80 text-xs mb-3 hidden sm:block">{banner.subtitle}</p>
+                  {banner.cta && (
+                    banner.ctaLink
+                      ? <Link href={banner.ctaLink} className="inline-block bg-white text-gray-900 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-amber-400 transition-colors">{banner.cta}</Link>
+                      : <button className="bg-white text-gray-900 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-amber-400 transition-colors">{banner.cta}</button>
+                  )}
+                </div>
               </div>
-              <div className="relative z-10">
-                <span className="inline-block bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full mb-2">{banner.badge}</span>
-                <h2 className="text-white font-bold text-sm sm:text-xl leading-tight mb-1">{banner.title}</h2>
-                <p className="text-white/80 text-xs mb-3 hidden sm:block">{banner.subtitle}</p>
-                <button className="bg-white text-gray-900 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-amber-400 transition-colors">{banner.cta}</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Search */}
@@ -198,29 +251,32 @@ export default function MarketplacePage() {
       </section>
 
       {/* ── Category Tiles ───────────────────────────────────────────── */}
-      <section className="px-3 sm:px-5 py-3">
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
-          {CATEGORY_TILES.map((cat) => (
-            <Link
-              key={cat.name}
-              href={`/marketplace?category=${encodeURIComponent(cat.name)}`}
-              className="relative rounded-xl overflow-hidden group"
-              style={{ height: "90px" }}
-            >
-              <Image src={cat.image} alt={cat.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-              <div className={`absolute inset-0 bg-gradient-to-b ${cat.color}`} />
-              <div className="absolute inset-0 flex items-center justify-center p-2">
-                <span className="text-white font-bold text-xs sm:text-sm text-center leading-tight drop-shadow">{cat.name}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-        <div className="flex justify-center gap-1.5 mt-2">
-          {[0, 1, 2, 3].map(i => (
-            <span key={i} className={`rounded-full ${i === 0 ? "w-4 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-gray-300"}`} />
-          ))}
-        </div>
-      </section>
+      {categories.length > 0 && (
+        <section className="px-3 sm:px-5 py-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+            {categories.map((cat, i) => (
+              <Link
+                key={cat.id}
+                href={`/marketplace?category=${encodeURIComponent(cat.name)}`}
+                className="relative rounded-xl overflow-hidden group"
+                style={{ height: "90px" }}
+              >
+                <Image
+                  src={cat.imageUrl ? imgSrc(cat.imageUrl) : TILE_FALLBACK_IMAGES[i % TILE_FALLBACK_IMAGES.length]}
+                  alt={cat.name}
+                  fill
+                  unoptimized
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className={`absolute inset-0 bg-gradient-to-b ${TILE_PALETTE[i % TILE_PALETTE.length]}`} />
+                <div className="absolute inset-0 flex items-center justify-center p-2">
+                  <span className="text-white font-bold text-xs sm:text-sm text-center leading-tight drop-shadow">{cat.name}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Best Selling Products ────────────────────────────────────── */}
       <section className="px-4 sm:px-6 py-6">
@@ -230,75 +286,33 @@ export default function MarketplacePage() {
         {loading ? (
           <div className="flex items-center justify-center py-10"><Loader2 size={28} className="animate-spin text-primary" /></div>
         ) : (
-          <HorizontalScroll products={[...products].sort((a, b) => parseInt(b.discount) - parseInt(a.discount)).slice(0, 10)} />
+          <HorizontalScroll products={bestSellingProducts} />
         )}
       </section>
 
-      {/* ── Baking Top Selling ───────────────────────────────────────── */}
-      {bakingProducts.length > 0 && (
+      {/* ── Featured Products (admin-selected, overall) ──────────────── */}
+      {featuredProducts.length > 0 && (
         <section className="px-4 sm:px-6 py-6 bg-orange-50/40">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-5">
-            Baking <span className="text-primary">Top Selling</span> Product
+            Featured <span className="text-primary">Picks</span>
           </h2>
-          <HorizontalScroll products={bakingProducts.slice(0, 8)} />
+          <HorizontalScroll products={featuredProducts} />
         </section>
       )}
 
-      {/* ── Skincare Top Selling (grid + big carousel image) ─────────── */}
-      {skincare.length > 0 && (
-        <section className="px-4 sm:px-6 py-8">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6">
-            Skincare <span className="text-primary">Top Selling</span> Product
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-start">
-            {/* Left: 2-col product grid */}
-            <div className="sm:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {skincare.slice(0, 6).map((product, i) => (
-                <Link key={product.id} href={`/marketplace/${product.id}`} className="group">
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow">
-                    <Image src={product.images?.[0] || `/courses_${(i % 6) + 1}.png`} alt={product.name} fill sizes="200px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                    {parseInt(product.discount) > 0 && (
-                      <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{product.discount}% OFF</span>
-                    )}
-                  </div>
-                  <p className="text-xs font-semibold text-gray-800 mt-1.5 line-clamp-2">{product.name}</p>
-                  <p className="text-xs text-primary font-bold">From ₹{parseFloat(product.price).toLocaleString()}</p>
-                </Link>
-              ))}
-            </div>
-            {/* Right: Auto-rotating carousel image */}
-            <Link href={skincare[skincareCarouselIdx] ? `/marketplace/${skincare[skincareCarouselIdx].id}` : "#"} className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-lg cursor-pointer block">
-              {skincare.map((product, i) => (
-                <div
-                  key={product.id}
-                  className={`absolute inset-0 transition-opacity duration-700 ${i === skincareCarouselIdx ? "opacity-100" : "opacity-0"}`}
-                >
-                  <Image
-                    src={product.images?.[0] || `/courses_${(i % 6) + 1}.png`}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 text-white">
-                <p className="font-bold text-sm leading-snug">{skincare[skincareCarouselIdx]?.name}</p>
-                <p className="text-xs text-white/70 mt-0.5">From ₹{parseFloat(skincare[skincareCarouselIdx]?.price || "0").toLocaleString()}</p>
-              </div>
-              {/* Carousel dots */}
-              <div className="absolute top-3 right-3 flex flex-col gap-1">
-                {skincare.slice(0, 5).map((_, i) => (
-                  <button key={i} onClick={(e) => { e.preventDefault(); setSkincareCarouselIdx(i); }} className={`w-1.5 rounded-full transition-all ${i === skincareCarouselIdx ? "h-4 bg-white" : "h-1.5 bg-white/50"}`} />
-                ))}
-              </div>
-            </Link>
-          </div>
-          <div className="flex justify-center gap-1.5 mt-5">
-            {[0, 1, 2, 3].map(i => <span key={i} className={`rounded-full ${i === 0 ? "w-4 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-gray-300"}`} />)}
-          </div>
-        </section>
-      )}
+      {/* ── Top Selling per Category ─────────────────────────────────── */}
+      {categoryNames.map((catName) => {
+        const catProducts = productsOfCategory(catName);
+        if (catProducts.length === 0) return null;
+        return (
+          <section key={catName} className="px-4 sm:px-6 py-6">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-5">
+              {catName} <span className="text-primary">Top Selling</span> Product
+            </h2>
+            <HorizontalScroll products={catProducts.slice(0, 10)} />
+          </section>
+        );
+      })}
 
       {/* ── Our Top Offers (big promo image LEFT, grid RIGHT) ─────────── */}
       <section className="px-4 sm:px-6 py-8 bg-amber-50/40">

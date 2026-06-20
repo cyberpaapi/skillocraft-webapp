@@ -23,6 +23,7 @@ export default function ReferralDashboard() {
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // UPI editing state
   const [editingUpi, setEditingUpi] = useState(false);
@@ -58,6 +59,13 @@ export default function ReferralDashboard() {
     navigator.clipboard.writeText(data.referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyLink = () => {
+    if (!referralLink) return;
+    navigator.clipboard.writeText(referralLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   const saveUpi = async () => {
@@ -294,11 +302,11 @@ export default function ReferralDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={copyCode}
+              onClick={copyLink}
               className="flex items-center gap-2 px-4 py-2 bg-secondary text-white rounded-xl text-sm font-medium hover:bg-secondary/90 transition-colors"
             >
-              {copied ? <CheckCheck className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? "Copied!" : "Copy Link"}
+              {linkCopied ? <CheckCheck className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {linkCopied ? "Copied!" : "Copy Link"}
             </button>
             <Link
               href={`https://wa.me/?text=Use my referral code ${data.referralCode} on Skillocraft and get ${data.discountPercent}% off! ${referralLink}`}

@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Star, User } from 'lucide-react';
 import { imgSrc } from '@/lib/imgSrc';
@@ -93,6 +94,14 @@ export default function CoursePage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [inCart, setInCart] = useState<boolean>(false);
   const [ordered, setOrdered] = useState<boolean>(false);
+  const [defaultCertificate, setDefaultCertificate] = useState<string>('');
+  const [callbackOpen, setCallbackOpen] = useState(false);
+  const [callbackName, setCallbackName] = useState('');
+  const [callbackPhone, setCallbackPhone] = useState('');
+  const [submittingCallback, setSubmittingCallback] = useState(false);
+  const [doubtOpen, setDoubtOpen] = useState(false);
+  const [doubtMessage, setDoubtMessage] = useState('');
+  const [submittingDoubt, setSubmittingDoubt] = useState(false);
   const { openModal } = useModal();
   const { invalidateNavbarData } = useInvalidateNavbarData();
   const { id } = useParams<{ id: string }>();
@@ -126,6 +135,58 @@ export default function CoursePage() {
 
   // Use API data if available, otherwise fall back to default FAQs
   const faqs = faqsData?.data?.length ? faqsData.data : [];
+
+  // Fetch the default certificate image from site settings
+  useEffect(() => {
+    axiosHomePublic.get('/site-settings?keys=default_certificate')
+      .then((res) => {
+        const url = res.data?.data?.default_certificate;
+        if (url) setDefaultCertificate(url);
+      })
+      .catch(() => {});
+  }, []);
+
+  const submitCallback = async () => {
+    if (!callbackName.trim() || !callbackPhone.trim()) {
+      toast.error('Please enter your name and phone number');
+      return;
+    }
+    setSubmittingCallback(true);
+    try {
+      await axiosHomePublic.post('/callback-requests', {
+        name: callbackName.trim(),
+        phone: callbackPhone.trim(),
+        courseId: course?.id,
+        courseName: course?.name,
+      });
+      toast.success('Thanks! We will call you back shortly.');
+      setCallbackOpen(false);
+      setCallbackName('');
+      setCallbackPhone('');
+    } catch {
+      toast.error('Failed to submit. Please try again.');
+    } finally {
+      setSubmittingCallback(false);
+    }
+  };
+
+  const submitDoubt = async () => {
+    setSubmittingDoubt(true);
+    try {
+      await axiosHomeProtected.post('/doubt-requests', {
+        courseId: course?.id,
+        message: doubtMessage.trim() || undefined,
+      });
+      toast.success('Your doubt clearing request has been submitted!');
+      setDoubtOpen(false);
+      setDoubtMessage('');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit request.';
+      toast.error(msg);
+    } finally {
+      setSubmittingDoubt(false);
+    }
+  };
 
   // Check if course is already in cart for logged-in users
   useEffect(() => {
@@ -347,7 +408,7 @@ export default function CoursePage() {
                     <div className="flex items-center space-x-1">
                       {[1, 2, 3, 4, 5].map((star) => {
                         // Calculate average rating from all reviews
-                        const averageRating = course.reviews.data.reduce((sum, review) => sum + review.rating, 0) / course.reviews.data.length;
+                        const averageRating = course.reviews.data.reduce((sum, review) => sum + (review.ratting ?? review.rating ?? 0), 0) / course.reviews.data.length;
                         return (
                           <Star
                             key={star}
@@ -391,14 +452,14 @@ export default function CoursePage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-sm font-medium text-[#3DCBB1]">
-                            {review.customer?.name || 'Anonymous'}
+                            {review.customer?.name || review.reviewerName || 'Anonymous'}
                           </p>
                           <div className="flex items-center space-x-1">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
                                 className={`h-3 w-3 ${
-                                  star <= review.rating
+                                  star <= (review.ratting ?? review.rating ?? 0)
                                     ? 'fill-yellow-400 text-yellow-400'
                                     : 'text-gray-300'
                                 }`}
@@ -407,7 +468,7 @@ export default function CoursePage() {
                           </div>
                         </div>
                         <p className="text-sm text-gray-600 mb-1">
-                          {review.comment}
+                          {review.details ?? review.comment}
                         </p>
                         <p className="text-xs text-gray-400">
                           {new Date(review.createdAt).toLocaleDateString('en-US', {
@@ -493,7 +554,14 @@ export default function CoursePage() {
             <div className="mt-12">
               <h3 className="text-lg font-semibold text-secondary mb-4">Online Certificates to <span className="text-primary">Prove Your Skills</span></h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-6">
-                <Image src="/certifiacte.png" alt="Certificate" width={300} height={200} className="rounded-xl shadow" />
+                <Image
+                  src={course?.certificate ? imgSrc(course.certificate) : defaultCertificate ? imgSrc(defaultCertificate) : '/certifiacte.png'}
+                  alt="Certificate"
+                  width={300}
+                  height={200}
+                  unoptimized
+                  className="rounded-xl shadow w-full h-auto object-contain"
+                />
                 <div className="space-y-4 text-sm">
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">✅</span>
@@ -563,32 +631,46 @@ export default function CoursePage() {
               </div>
             </div>
             {/* Recommendations */}
-            <div className="mt-12">
-              <h3 className="text-lg font-semibold text-secondary mb-4">Recommended <span className="text-primary">Courses</span> 😍</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                
-                {course?.similarCourses?.map((i) => {
-                  // Add fallback for image source
-                  const imageSrc = i.image 
-                    ? `${i.image}`
-                    : '/placeholder-course.jpg'; // Add a placeholder image in your public folder
-                  
-                  return(
-                  <div key={i.id} className="bg-white p-3 rounded shadow text-sm">
-                    <div className="aspect-video bg-gray-200 mb-2">
-                      <Image src={imageSrc} 
-                        alt={i.name} 
-                        width={300} 
-                        height={200} 
-                        className="rounded" />
-                    </div>
-                    <h4 className="font-medium leading-snug">{course.name}</h4>
-                    <p className="text-gray-500 text-xs">by Skillocraft</p>
-                    <div className="text-primary font-semibold mt-1">₹{course.price}</div>
+            {(() => {
+              const recs = (course?.recommendedCourses && course.recommendedCourses.length > 0)
+                ? course.recommendedCourses.map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                    image: c.image,
+                    price: c.price,
+                    discountedPrice: c.discountedPrice,
+                    creatorName: c.creatorName,
+                  }))
+                : (course?.similarCourses || []).map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                    image: c.image,
+                    price: c.price,
+                    discountedPrice: null as string | null,
+                    creatorName: 'Skillocraft',
+                  }));
+              if (recs.length === 0) return null;
+              return (
+                <div className="mt-12">
+                  <h3 className="text-lg font-semibold text-secondary mb-4">Recommended <span className="text-primary">Courses</span> 😍</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {recs.map((i) => {
+                      const imageSrc = i.image ? imgSrc(i.image) : '/placeholder-course.jpg';
+                      return (
+                        <Link href={`/courses/${i.id}`} key={i.id} className="bg-white p-3 rounded shadow text-sm hover:shadow-md transition-shadow">
+                          <div className="aspect-video bg-gray-200 mb-2 rounded overflow-hidden">
+                            <Image src={imageSrc} alt={i.name} width={300} height={200} unoptimized className="w-full h-full object-cover" />
+                          </div>
+                          <h4 className="font-medium leading-snug line-clamp-2">{i.name}</h4>
+                          <p className="text-gray-500 text-xs">by {i.creatorName}</p>
+                          <div className="text-primary font-semibold mt-1">₹{i.discountedPrice || i.price}</div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                )})}
-              </div>
-            </div>
+                </div>
+              );
+            })()}
             <footer className="mt-12 text-sm py-6">
               <p className="font-semibold text-secondary text-4xl">Keep Learning</p>
               <span className="font-semibold text-4xl text-primary pl-20">Keep Growing 🌱</span>
@@ -621,11 +703,10 @@ export default function CoursePage() {
                     openModal('login');
                     return;
                   }
-                  // If already purchased, start the course (go to first product)
+                  // If already purchased, open the dedicated watch experience
                   if (ordered) {
-                    const firstProductId = course?.products && course.products.length > 0 ? course.products[0].id : null;
-                    if (firstProductId) {
-                      router.push(`/courses/${id}/${firstProductId}`);
+                    if (course?.products && course.products.length > 0) {
+                      router.push(`/courses/${id}/watch`);
                     } else {
                       toast.error('No lessons available in this course yet');
                     }
@@ -673,9 +754,9 @@ export default function CoursePage() {
               </button>
               {ordered && <CourseDownloads courseId={id} />}
               <ul className="mt-4 text-sm text-gray-600 space-y-2">
-                <li>🎥 {course?.products?.length || 0} Lectures</li>
-                {calculateTotalDuration(course?.products) && (
-                  <li>⏱️ {calculateTotalDuration(course?.products)} total length</li>
+                <li>🎥 {course?.lectures || course?.products?.length || 0} Lectures</li>
+                {(course?.duration || calculateTotalDuration(course?.products)) && (
+                  <li>⏱️ {course?.duration || calculateTotalDuration(course?.products)} total length</li>
                 )}
                 {course?.language && (
                   <li>🌐 {course.language}</li>
@@ -683,52 +764,127 @@ export default function CoursePage() {
                 <li>💬 Doubt clearing session available</li>
               </ul>
             </div>
+            {/* Request for Doubt Clearing — enrolled students only */}
+            {ordered && (
+              <div className="bg-white rounded-2xl shadow p-4 text-center">
+                <p className="text-sm font-medium text-gray-700">Stuck somewhere in the course?</p>
+                <button
+                  onClick={() => setDoubtOpen(true)}
+                  className="w-full mt-3 bg-secondary text-white hover:bg-secondary/90 font-semibold py-2 rounded transition-colors flex items-center justify-center gap-2"
+                >
+                  💬 Request for Doubt Clearing
+                </button>
+              </div>
+            )}
+
+            {/* Get a Callback Card */}
+            <div className="bg-white rounded-2xl shadow p-4 text-center">
+              <p className="text-sm font-medium text-gray-700">Not sure yet? Receive a callback</p>
+              <button
+                onClick={() => setCallbackOpen(true)}
+                className="w-full mt-3 border-2 border-orange-500 text-orange-500 hover:bg-orange-50 font-semibold py-2 rounded transition-colors"
+              >
+                📞 Get a Callback
+              </button>
+            </div>
+
             {/* Instructor Card */}
             <div className="bg-black rounded-2xl text-white overflow-hidden shadow">
-              <div className="relative h-48 w-full">
+              {course.creator?.imageLink ? (
                 <Image
-                  src="/signup.jpg"
-                  alt="Instructor Background"
-                  layout="fill"
-                  objectFit="cover"
-                  className="opacity-30"
+                  src={imgSrc(course.creator.imageLink)}
+                  alt={course.creator?.name || 'Instructor'}
+                  width={400}
+                  height={300}
+                  unoptimized
+                  className="w-full h-56 object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-20 h-20">
-                    {course.creator?.imageLink ? (
-                      <Image
-                        src={imgSrc(course.creator.imageLink)}
-                        alt={course.creator?.name || 'Instructor'}
-                        width={80}
-                        height={80}
-                        className="rounded-full border-4 border-white object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    ) :
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-600 rounded-full border-4 border-white">
-                      <User className="w-8 h-8 text-gray-300" />
-                    </div>}
-                  </div>
+              ) : (
+                <div className="w-full h-56 flex items-center justify-center bg-gray-700">
+                  <User className="w-12 h-12 text-gray-400" />
                 </div>
-              </div>
+              )}
               <div className="p-4 text-center">
                 <div className="text-lg font-semibold">{course.creator?.name || 'Instructor'}</div>
                 <div className="text-xs text-gray-400 mt-1">{course.creator?.designation || 'Course Creator'}</div>
-                <hr className="border-gray-700 my-3" />
-                <ul className="text-sm text-gray-300 space-y-1">
-                  {/* <li>✅ Conducted over 200+ Sessions</li>
-                  <li>✅ 7+ Years in English & Hindi</li>
-                  <li>✅ Taught over 250K+ students</li> */}
-                  <li>{course.creator?.description}</li>
-                </ul>
+                {course.creator?.description && (
+                  <>
+                    <hr className="border-gray-700 my-3" />
+                    <p className="text-sm text-gray-300">{course.creator.description}</p>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Callback Request Modal */}
+      {callbackOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setCallbackOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-semibold text-gray-800">Request a Callback</h3>
+              <button onClick={() => setCallbackOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Leave your details and our team will call you back about <span className="font-medium">{course?.name}</span>.</p>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Your name"
+                value={callbackName}
+                onChange={(e) => setCallbackName(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                value={callbackPhone}
+                onChange={(e) => setCallbackPhone(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <button
+                onClick={submitCallback}
+                disabled={submittingCallback}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 rounded-lg disabled:opacity-60"
+              >
+                {submittingCallback ? 'Submitting...' : 'Request Callback'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Doubt Clearing Modal */}
+      {doubtOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setDoubtOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-semibold text-gray-800">Request for Doubt Clearing</h3>
+              <button onClick={() => setDoubtOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Our team will reach out to help you with <span className="font-medium">{course?.name}</span>. Add a note about what you&apos;re stuck on (optional).</p>
+            <textarea
+              placeholder="Describe your doubt (optional)"
+              value={doubtMessage}
+              onChange={(e) => setDoubtMessage(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary resize-none mb-3"
+            />
+            <button
+              onClick={submitDoubt}
+              disabled={submittingDoubt}
+              className="w-full bg-secondary hover:bg-secondary/90 text-white font-semibold py-2 rounded-lg disabled:opacity-60"
+            >
+              {submittingDoubt ? 'Submitting...' : 'Submit Request'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

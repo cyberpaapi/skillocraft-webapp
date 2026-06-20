@@ -67,9 +67,9 @@ export default function TermsPage() {
                     Payment terms and refund policies:
                   </p>
                   <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                    <li>All fees are in USD and non-refundable except as required by law</li>
+                    <li>All fees are in INR and non-refundable except as required by law</li>
                     <li>We may change our pricing at any time</li>
-                    <li>Refund requests must be made within 30 days of purchase</li>
+                    <li>Refund requests must be made within 7 days of purchase</li>
                     <li>We use third-party payment processors for transactions</li>
                   </ul>
                 </section>
