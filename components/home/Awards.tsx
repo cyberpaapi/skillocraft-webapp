@@ -164,14 +164,16 @@ const AwardsHome:FC = () => {
                 <SwiperSlide key={`${item.id}-${index}`}>
                   {imageUrl ? (
                     item.linkUrl ? (
-                      <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
-                        <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="w-full h-auto md:rounded-3xl rounded-2xl" />
+                      <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer md:h-72 h-52 flex items-center justify-center">
+                        <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="max-h-full w-auto object-contain md:rounded-3xl rounded-2xl" />
                       </a>
                     ) : (
-                      <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="w-full h-auto md:rounded-3xl rounded-2xl" />
+                      <div className="md:h-72 h-52 flex items-center justify-center">
+                        <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="max-h-full w-auto object-contain md:rounded-3xl rounded-2xl" />
+                      </div>
                     )
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 rounded-2xl flex items-center justify-center">
+                    <div className="w-full md:h-72 h-52 bg-gray-200 rounded-2xl flex items-center justify-center">
                       <span className="text-gray-500 text-sm">No image</span>
                     </div>
                   )}
@@ -183,10 +185,15 @@ const AwardsHome:FC = () => {
             );
           })()}
 
-          {/* Admin-managed Logos */}
-          {logos.length > 0 && (
-            <div className="flex items-center flex-wrap md:gap-4 gap-3">
-              <div className="flex flex-wrap md:gap-3 gap-2">
+          {/* Featured on: badge + admin logos + brands in one row */}
+          <div className="space-y-2">
+          <div className="flex items-center flex-wrap md:gap-6 gap-4">
+            <span className="inline-block px-3 py-1 bg-primary text-white md:text-sm text-xs font-semibold rounded-2xl">
+              Featured on
+            </span>
+            {/* Admin-managed clickable logos */}
+            {logos.length > 0 && (
+              <div className="flex flex-wrap items-center md:gap-3 gap-2">
                 {logos.map((logo, i) => {
                   const img = (
                     <img
@@ -196,22 +203,15 @@ const AwardsHome:FC = () => {
                     />
                   );
                   return logo.link ? (
-                    <a key={i} href={logo.link} target="_blank" rel="noopener noreferrer" className="md:size-14 size-10 block">
+                    <a key={i} href={logo.link} target="_blank" rel="noopener noreferrer" className="md:size-12 size-8 block">
                       {img}
                     </a>
                   ) : (
-                    <div key={i} className="md:size-14 size-10">{img}</div>
+                    <div key={i} className="md:size-12 size-8">{img}</div>
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* Brands Logo */}
-          <div className="flex items-center flex-wrap md:gap-6 gap-4">
-            <span className="inline-block px-3 py-1 bg-primary text-white md:text-sm text-xs font-semibold rounded-2xl">
-              Featured on
-            </span>
+            )}
             <div className="flex flex-wrap md:gap-3 gap-1">
               {brands.map((brand) => {
                 const logoUrl = imgSrc(brand.logo, '');
@@ -240,6 +240,10 @@ const AwardsHome:FC = () => {
                 );
               })}
             </div>
+          </div>
+          {logos.length > 0 && (
+            <p className="text-xs text-gray-500">Please click to review</p>
+          )}
           </div>
         </div>
       </div>

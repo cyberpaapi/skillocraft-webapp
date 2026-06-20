@@ -15,13 +15,15 @@ const CreatorCard: React.FC<Creator> = ({
 }) => {
   return (
     <div className="space-y-4 text-center">
-      <Image
-        src={imgSrc(imageLink, '/creators/placeholder.jpg')}
-        alt={name}
-        width={500}
-        height={500}
-        className="w-full object-cover"
-      />
+      <div className="mx-auto w-full max-w-[240px] sm:max-w-none">
+        <Image
+          src={imgSrc(imageLink, '/creators/placeholder.jpg')}
+          alt={name}
+          width={500}
+          height={500}
+          className="w-full h-56 md:h-64 object-cover rounded-2xl"
+        />
+      </div>
 
       {/* Details */}
       <div className="space-y-1">

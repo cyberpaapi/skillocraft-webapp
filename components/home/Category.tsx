@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination } from "swiper/modules";
 import CategoryCard from "@/components/common/card/Category";
 import { FC } from "react";
 import { Category } from "@/types";
@@ -60,26 +62,49 @@ const CategoryHome:FC = () => {
         </div>
 
         {/* Category Cards */}
-        <div className="flex flex-wrap justify-center md:-mx-4 -mx-2 gap-y-5">
-          {categories.map((category, index) => {
-            const isEven = index % 2 === 0;
+        <div className="columns-1">
+          <Swiper
+            loop={true}
+            spaceBetween={20}
+            slidesPerView={2}
+            breakpoints={{
+              1024: { slidesPerView: 4 },
+              768: { slidesPerView: 3 },
+              640: { slidesPerView: 2 },
+            }}
+            autoplay={{
+              delay: 3000,
+              disableOnInteraction: false,
+            }}
+            speed={3000}
+            pagination={{
+              clickable: true,
+              dynamicBullets: true,
+              renderBullet: (index, className) =>
+                `<span class="${className} custom-bullet">${index + 1}</span>`,
+            }}
+            modules={[Pagination, Autoplay]}
+            className="pb-10"
+          >
+            {categories.map((category, index) => {
+              const isEven = index % 2 === 0;
 
-            const overlayColorClass = isEven
-              ? "bg-white/60"
-              : "bg-primary/85";
-        
-            const titleColorClass = isEven
-              ? "text-primary"
-              : "text-white";
-            return (
+              const overlayColorClass = isEven
+                ? "bg-white/60"
+                : "bg-primary/85";
 
-              <div key={index} className="lg:w-1/4 md:w-1/3 sm:w-1/2 w-1/2 px-2">
-                <CategoryCard key={index} {...category} 
-                overlayColorClass={overlayColorClass}
-                titleColorClass={titleColorClass}/>
-              </div>
-              )
-          })}
+              const titleColorClass = isEven
+                ? "text-primary"
+                : "text-white";
+              return (
+                <SwiperSlide key={index}>
+                  <CategoryCard key={index} {...category}
+                  overlayColorClass={overlayColorClass}
+                  titleColorClass={titleColorClass}/>
+                </SwiperSlide>
+                )
+            })}
+          </Swiper>
         </div>
       </div>
     </section>

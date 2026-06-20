@@ -46,7 +46,7 @@ const TestimonialHome:FC = () => {
     }
   }, [response]);
 
-  const testimonialSlides = groupIntoSlides(testimonials, 4);
+  const testimonialSlides = groupIntoSlides(testimonials, 6);
 
   return (
     // <section className="relative lg:pb-24 pb-12">
@@ -192,11 +192,11 @@ const TestimonialHome:FC = () => {
         >
           {testimonialSlides.map((group, slideIndex) => (
             <SwiperSlide key={slideIndex}>
-              <div className="flex flex-wrap justify-center -mx-2 gap-y-5">
+              <div className="flex flex-wrap justify-center -mx-2 gap-y-4">
                 {group.map((testimonial, i) => (
                   <div
                     key={i}
-                    className="md:w-1/3 sm:w-1/2 w-full px-2 flex justify-center"
+                    className="md:w-1/3 w-1/2 px-2"
                   >
                     <TestimonialCard {...testimonial} />
                   </div>

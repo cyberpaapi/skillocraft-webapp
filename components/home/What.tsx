@@ -23,7 +23,7 @@ const WhatHome:FC = () => {
             <span className="inline-block text-primary">Skillocraft?</span>
           </h2>
           <p className="md:text-lg text-sm font-light">
-            Skillocraft is an online learning platform that offers every course from basic techniques to advanced skill. Skillocraft also helps you to start your entrepreneurial journey.
+            Skillocraft is an online learning platform that offers every course from basic techniques to advanced stage. Skillocraft also helps you to start your entrepreneurial journey.
           </p>
         </div>
 
@@ -40,14 +40,15 @@ const WhatHome:FC = () => {
               <div className="absolute left-0 bottom-0 -z-10 w-2 h-16 rounded-md bg-secondary"></div>
               <div className="absolute left-0 bottom-0 -z-10 w-16 h-2 rounded-md bg-secondary"></div>
 
-              <ul className="list-disc text-primary ps-6 pb-4 space-y-1 md:text-lg text-sm">
-                <li>One-stop solution for skilled professionals</li>
-                <li>Unlimited learning for skilled talents</li>
-                <li>Learn online courses theoretically and practically from anywhere</li>
-                <li>Purchase HD-quality learning videos at an affordable cost</li>
-                <li>Arrangements for doubt-clearing sessions and workshops</li>
-                <li>Learn from scratch to advance level at Skillocraft from experts</li>
-                <li>Immense opportunity for skilled professionals to teach and earn</li>
+              <ul className="list-disc text-primary ps-6 pb-4 space-y-2 md:text-lg text-sm">
+                <li><span className="font-semibold text-secondary">Learn Skills That Actually Make Money</span> - Not just theory - practical &amp; income-generating skills</li>
+                <li><span className="font-semibold text-secondary">Learn Anytime, Anywhere</span> - Learn at your own pace - no deadlines, no pressure</li>
+                <li><span className="font-semibold text-secondary">Affordable Learning</span> - One-time payment, lifetime value</li>
+                <li><span className="font-semibold text-secondary">Start From Home</span> - Learn skills that require low or zero setup cost</li>
+                <li><span className="font-semibold text-secondary">Business-Focused Training</span> - Not just &ldquo;how to make&rdquo; - also how to sell. Learn pricing, packaging &amp; customer basics</li>
+                <li><span className="font-semibold text-secondary">Beginner Friendly Courses</span> - No prior experience needed. Simple, easy-to-follow lessons.</li>
+                <li><span className="font-semibold text-secondary">Lifetime Access</span> - Revisit lessons anytime. No expiry — your learning stays with you</li>
+                <li><span className="font-semibold text-secondary">Community &amp; Support</span> - Learn with like-minded people. Get guidance and support when needed.</li>
               </ul>
             </div>
           </div>

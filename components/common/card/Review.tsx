@@ -11,7 +11,7 @@ const TestimonialCard: React.FC<Testimonial> = ({
   description,
 }) => {
   return (
-    <div className="relative bg-white hover:bg-primary/90 shadow-xl space-y-4 px-8 py-6 md:rounded-3xl rounded-2xl group transition ease-in-out delay-150 duration-300">
+    <div className="relative bg-white hover:bg-primary/90 shadow-xl space-y-4 md:px-8 px-4 md:py-6 py-4 md:rounded-3xl rounded-2xl group transition ease-in-out delay-150 duration-300">
       <IoPlayOutline className="size-6 stroke-2 absolute top-4 right-4 text-primary group-hover:text-white transition ease-in-out delay-150 duration-300" />
       <div className="md:size-28 size-16 rounded-full overflow-hidden mx-auto border-4 border-primary group-hover:border-white transition ease-in-out delay-150 duration-300">
         <Image

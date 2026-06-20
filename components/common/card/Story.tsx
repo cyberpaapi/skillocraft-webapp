@@ -16,14 +16,14 @@ const StoryCard: FC<SuccessStory> = ({
   coverPhoto
 }) => {
   return (
-    <Link href={`/success/${id}`} className="block md:rounded-3xl rounded-2xl group md:p-8 p-6 bg-background shadow-xl hover:shadow-2xl transition-shadow">
+    <Link href={`/success/${id}`} className="flex flex-col h-full md:rounded-3xl rounded-2xl group md:p-8 p-6 bg-background shadow-xl hover:shadow-2xl transition-shadow">
       <Image
         src={imgSrc(coverPhoto)}
         alt="Story Image"
         width={500}
         height={500}
         unoptimized
-        className="w-full h-auto object-cover md:rounded-2xl rounded-xl"
+        className="w-full h-48 object-cover md:rounded-2xl rounded-xl"
       />
       <div className="flex items-center gap-2 mt-4 mb-2">
         <Image
@@ -53,7 +53,7 @@ const StoryCard: FC<SuccessStory> = ({
       <p className="text-sm text-primary my-2 line-clamp-2">
         {description}
       </p>
-      <p className="text-sm font-semibold text-red-500">Read More...</p>
+      <p className="text-sm font-semibold text-red-500 mt-auto pt-2">Read More...</p>
     </Link>
   );
 };

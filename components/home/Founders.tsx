@@ -44,13 +44,13 @@ const FoundersHome:FC = () => {
               </h3>
             </div>
             <p className="text-primary md:text-lg text-sm">
-              When the time comes to reveal the names of the founders ofsuch change maker company SkillocraftPvt. Ltd, Amritendu Chowdhury holds a prominent place. After pursuing B.Tech, he founded one company named Chowdhury Group of Companies Pvt. Ltd in 2015. He achieved success in flourishinghis business in Event Management & Recruitment Services.
+              When the time comes to unveil the visionary minds behind Skillocraft, Amritendu Chowdhury stands at the forefront as a key driving force behind the company&apos;s mission and growth. A B.Tech graduate by qualification, Amritendu embarked on his entrepreneurial journey in 2015 by founding Chowdhury Group of Companies. Through his leadership, the company successfully established itself in the domains of Event Management and Recruitment Services, showcasing his ability to build and scale sustainable business models.
             </p>
             <p className="text-primary md:text-lg text-sm">
-              Next comes in his mind the idea of a new startup business, which aims at finding new skills and talents in different fields. Amritendu Chowdhury is likely to bring revolution in skilled courses throughout India. He holds 90% of the company shares.
+              Driven by a passion for innovation and impact, Amritendu envisioned a new-age startup focused on skill development and entrepreneurship creation. This vision led to the foundation of Skillocraft—an initiative aimed at identifying untapped talent and empowering individuals to become successful entrepreneurs across diverse industries. As the majority shareholder, holding 96% equity, Amritendu plays a pivotal role in shaping the strategic direction, innovation, and long-term vision of Skillocraft Pvt. Ltd.
             </p>
             <p className="text-primary md:text-lg text-sm">
-              Sangita Das and Shilpa Halder are the other two founders and shareholders of Skillocraft. Sangita Das,who was a B.Tech student, was an ex-employee of Ed-tech company Byju. She has in-depth knowledge and vast experience in online education
+              Sangita Roy, one of the shareholders of Skillocraft, is a B.Tech graduate and a former employee of BYJU&apos;S. She brings in-depth knowledge and extensive experience in the online education sector. Her expertise and industry exposure are expected to play a significant role in helping Skillocraft achieve its vision and scale effectively in the competitive ed-tech landscape.
             </p>
           </div>
         </div>

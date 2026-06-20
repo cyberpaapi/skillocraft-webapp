@@ -122,7 +122,7 @@ const StorySuccess = () => {
             className="pb-10"
           >
           {successStory.map((story, index) => (
-            <SwiperSlide key={index}>
+            <SwiperSlide key={index} className="!h-auto">
               <StoryCard key={index} {...story} />
             </SwiperSlide>
           ))}

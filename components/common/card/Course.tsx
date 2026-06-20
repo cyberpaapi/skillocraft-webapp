@@ -3,7 +3,6 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaRegUser } from "react-icons/fa6";
 import type { Course } from "@/types";
 import { BsCollectionPlay } from "react-icons/bs";
 import { imgSrc } from "@/lib/imgSrc";
@@ -14,7 +13,6 @@ const CourseCard: React.FC<Course> = ({
   shortDescription,
   imageLink,
   price,
-  orderCount,
   productCount
 
 }) => {
@@ -55,9 +53,6 @@ const CourseCard: React.FC<Course> = ({
               <BsCollectionPlay/>
               <span className="text-xs text-gray-500 ml-1">({productCount})</span>
             </div>
-          </div>
-          <div className="text-sm text-gray-500 flex items-center">
-            <FaRegUser className="mr-1" /> {orderCount}
           </div>
         </div>
         

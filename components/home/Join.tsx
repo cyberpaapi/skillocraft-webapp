@@ -3,9 +3,21 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
+import { axiosHomePublic } from "@/services/axiosHomeService";
 
 const JoinHome:FC = () => {
+  const [joinLink, setJoinLink] = useState("/");
+
+  useEffect(() => {
+    axiosHomePublic.get('/site-settings?keys=home_join_button_link')
+      .then(({ data }) => {
+        const url = data?.data?.home_join_button_link;
+        if (url) setJoinLink(url);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="relative lg:pb-24 pb-12 pt-24">
       <Image
@@ -26,8 +38,8 @@ const JoinHome:FC = () => {
       <div className="container mx-auto">
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           {/* Phone mockup on the left */}
-          <div className="flex items-center justify-center">
-            <div className="relative w-28 sm:w-32 lg:w-36">
+          <div className="flex items-center justify-center lg:justify-end">
+            <div className="relative w-48 sm:w-52 lg:w-60 mt-[100px]">
               <Image
                 src="/phone-mockup.png"
                 width={400}
@@ -50,7 +62,11 @@ const JoinHome:FC = () => {
                 Group of{" "}<span className="text-emerald-700 font-semibold">1,000</span>{" "}beauty <br /> brand owners
               </h5>
               <div className="block">
-                <Link className="inline-block md:text-xl text-base text-white bg-emerald-700 hover:bg-emerald-700/90 px-4 py-2 rounded-full" href="/">Join Now</Link>
+                {joinLink.startsWith("http") ? (
+                  <a className="inline-block md:text-xl text-base text-white bg-emerald-700 hover:bg-emerald-700/90 px-4 py-2 rounded-full" href={joinLink} target="_blank" rel="noopener noreferrer">Join Now</a>
+                ) : (
+                  <Link className="inline-block md:text-xl text-base text-white bg-emerald-700 hover:bg-emerald-700/90 px-4 py-2 rounded-full" href={joinLink}>Join Now</Link>
+                )}
               </div>
             </div>
 
