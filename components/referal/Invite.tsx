@@ -29,7 +29,7 @@ const ReferralInvite = () => {
                 Invite Together, earn together
               </h4>
               <p className="text-sm">
-                Friends don’t let friends miss opportunities. Invite your friends to join Skillocraft and earn referral bonus of $25 each. (Referral program rules apply only)
+                Friends don’t let friends miss opportunities. Invite your friends to join Skillocraft and earn referral bonus of ₹25 each. (Referral program rules apply only)
               </p>
             </div>
             <ul className="space-y-3">
@@ -43,7 +43,7 @@ const ReferralInvite = () => {
                 <span className="inline-flex flex-shrink-0 items-center justify-center size-8 bg-white border border-gray-400 rounded-full">
                   <HiShoppingCart className="text-base" />
                 </span>
-                Your friends get $25 off their first purchase.
+                Your friends get ₹25 off their first purchase.
               </li>
               <li className="flex items-center gap-4 text-sm">
                 <span className="inline-flex flex-shrink-0 items-center justify-center size-8 bg-white border border-gray-400 rounded-full">

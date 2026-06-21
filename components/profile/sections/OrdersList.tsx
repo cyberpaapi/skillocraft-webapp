@@ -158,7 +158,7 @@ const OrdersList = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">${order.totalAmount}</p>
+                <p className="text-sm font-medium text-gray-900">₹{order.totalAmount}</p>
                 <p className="text-sm text-gray-500">
                   {order.course.length} {order.course.length === 1 ? 'course' : 'courses'}
                 </p>
@@ -208,8 +208,8 @@ const OrdersList = () => {
                   <span className="text-gray-500">Discount ({order.discountCoupon.couponId}):</span>
                   <span className="font-medium">
                     {order.discountCoupon.amountType === 'PERCENTAGE' 
-                      ? `${order.discountCoupon.amount}%` 
-                      : `-$${order.discountCoupon.amount}`}
+                      ? `${order.discountCoupon.amount}%`
+                      : `-₹${order.discountCoupon.amount}`}
                   </span>
                 </div>
               </div>

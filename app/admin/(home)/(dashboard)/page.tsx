@@ -103,7 +103,7 @@ function DashboardContent() {
             },
             { 
               name: 'Total Revenue', 
-              value: `$${data.total_earnings.toLocaleString()}`, 
+              value: `₹${data.total_earnings.toLocaleString()}`,
               change: data.todays_earnings > 0 ? `+${data.todays_earnings}%` : `${data.todays_earnings}%`, 
               changeType: data.todays_earnings >= 0 ? 'positive' : 'negative' as const 
             },

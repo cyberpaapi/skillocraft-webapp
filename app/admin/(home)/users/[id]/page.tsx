@@ -304,7 +304,7 @@ export default function UserDetailsPage() {
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-medium">Current Plan</h4>
-                      <p className="text-muted-foreground">Pro Plan - $29/month</p>
+                      <p className="text-muted-foreground">Pro Plan - ₹29/month</p>
                     </div>
                     <div>
                       <h4 className="font-medium">Billing Cycle</h4>

@@ -89,9 +89,9 @@ const CategoryBlog = () => {
               const isEven = index % 2 === 0;
 
               const overlayColorClass = isEven
-                ? "bg-white/60"
+                ? "bg-white/90"
                 : "bg-primary/85";
-          
+
               const titleColorClass = isEven
                 ? "text-primary"
                 : "text-white";

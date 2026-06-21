@@ -32,9 +32,10 @@ function useVisibleCount() {
 }
 
 export default function BannerCarousel() {
-  const [banners, setBanners] = useState<Banner[]>([]);
+  // Seed with fallback banners so the carousel paints instantly, then swap in
+  // the real banners once the API responds (no blank gap on first load).
+  const [banners, setBanners] = useState<Banner[]>(FALLBACK_BANNERS);
   const [current, setCurrent] = useState(0);
-  const [loaded, setLoaded] = useState(false);
   const visibleCount = useVisibleCount();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,13 +47,12 @@ export default function BannerCarousel() {
       .get('/banners?location=HOME&status=ACTIVE')
       .then(({ data }) => {
         const all: Banner[] = data?.data || [];
-        const valid = all.map(b =>
-          isValidImage(b.imageLink) ? b : { ...b, imageLink: '' }
-        );
-        setBanners(valid.length > 0 ? valid : FALLBACK_BANNERS);
+        const valid = all
+          .filter(b => isValidImage(b.imageLink))
+          .map(b => ({ ...b }));
+        if (valid.length > 0) setBanners(valid);
       })
-      .catch(() => setBanners(FALLBACK_BANNERS))
-      .finally(() => setLoaded(true));
+      .catch(() => {/* keep fallback banners */});
   }, []);
 
   const maxCurrent = Math.max(0, banners.length - visibleCount);
@@ -74,7 +74,7 @@ export default function BannerCarousel() {
     return () => clearInterval(t);
   }, [banners.length, visibleCount, next]);
 
-  if (!loaded || banners.length === 0) return null;
+  if (banners.length === 0) return null;
 
   // translateX% is relative to the track width (= banners.length * cardWidth).
   // One step = 1 card = 100/banners.length % of the track — independent of visibleCount.

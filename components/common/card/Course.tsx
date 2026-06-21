@@ -57,7 +57,7 @@ const CourseCard: React.FC<Course> = ({
         </div>
         
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <span className="text-lg font-bold text-primary">${price}</span>
+          <span className="text-lg font-bold text-primary">₹{price}</span>
         </div>
       </div>
     </div>

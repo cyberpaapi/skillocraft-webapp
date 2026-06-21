@@ -6,13 +6,16 @@ import Link from "next/link";
 import { BlogDetailsResponseData } from "@/types";
 // import { Skeleton } from "@/components/ui/skeleton";
 
-// Format an ISO timestamp as "HH:MM ,DD-MM-YY"
-const formatBlogDate = (value?: string) => {
-  if (!value) return "";
+// Split an ISO timestamp into "HH:MM" time and "DD-MM-YY" date parts
+const formatBlogDateTime = (value?: string) => {
+  if (!value) return { time: "", date: "" };
   const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
+  if (isNaN(d.getTime())) return { time: "", date: value };
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())} ,${p(d.getDate())}-${p(d.getMonth() + 1)}-${p(d.getFullYear() % 100)}`;
+  return {
+    time: `${p(d.getHours())}:${p(d.getMinutes())}`,
+    date: `${p(d.getDate())}-${p(d.getMonth() + 1)}-${p(d.getFullYear() % 100)}`,
+  };
 };
 
 
@@ -88,7 +91,11 @@ const BlogDetails = ({
 
         {/* Content */}
         <div className="max-w-4xl mx-auto space-y-4 md:px-8 px-0">
-          <div className="text-sm text-gray-500">{formatBlogDate(createdAt)}</div>
+          <div className="text-sm text-gray-500">
+            <p className="font-semibold text-secondary">Uploaded At</p>
+            <p>Time: {formatBlogDateTime(createdAt).time}</p>
+            <p>Date: {formatBlogDateTime(createdAt).date}</p>
+          </div>
 
           {/* Image Sec */}
             <Image

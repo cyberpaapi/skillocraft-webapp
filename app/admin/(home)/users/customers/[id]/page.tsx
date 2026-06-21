@@ -257,7 +257,7 @@ export default function CustomerDetailsPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Total Spent</span>
                       <span className="font-semibold">
-                        ${orders.reduce((sum, order) => sum + parseFloat(order.paidAmount), 0).toFixed(2)}
+                        ₹{orders.reduce((sum, order) => sum + parseFloat(order.paidAmount), 0).toFixed(2)}
                       </span>
                     </div>
                   </CardContent>
@@ -306,7 +306,7 @@ export default function CustomerDetailsPage() {
                                 )}
                                 <div>
                                   <p className="font-medium text-sm">{course.name}</p>
-                                  <p className="text-sm text-muted-foreground">${course.price}</p>
+                                  <p className="text-sm text-muted-foreground">₹{course.price}</p>
                                 </div>
                               </div>
                             ))}
@@ -327,7 +327,7 @@ export default function CustomerDetailsPage() {
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="font-medium">${order.paidAmount}</p>
+                              <p className="font-medium">₹{order.paidAmount}</p>
                               <p className="text-sm text-muted-foreground">Paid</p>
                             </div>
                           </div>
@@ -370,7 +370,7 @@ export default function CustomerDetailsPage() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="font-medium">${item.course.price}</div>
+                            <div className="font-medium">₹{item.course.price}</div>
                             <Badge className={`${statusColors[item.course.status]} capitalize text-xs`}>
                               {item.course.status}
                             </Badge>
@@ -414,7 +414,7 @@ export default function CustomerDetailsPage() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="font-medium">${item.course.price}</div>
+                            <div className="font-medium">₹{item.course.price}</div>
                             <Badge className={`${statusColors[item.course.status]} capitalize text-xs`}>
                               {item.course.status}
                             </Badge>
@@ -425,7 +425,7 @@ export default function CustomerDetailsPage() {
                         <div className="flex justify-between items-center">
                           <span className="font-medium">Total:</span>
                           <span className="font-bold text-lg">
-                            ${cart.reduce((sum, item) => sum + parseFloat(item.course.price), 0).toFixed(2)}
+                            ₹{cart.reduce((sum, item) => sum + parseFloat(item.course.price), 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
