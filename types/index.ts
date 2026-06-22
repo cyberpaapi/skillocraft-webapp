@@ -175,6 +175,7 @@ export interface Course {
   featured:boolean |false;
   status: Status;
   price: number;
+  discountedPrice?: string | null;
   productCount: number;
   orderCount: number;
   creator: Creator;

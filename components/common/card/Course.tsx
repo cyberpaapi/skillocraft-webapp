@@ -13,9 +13,11 @@ const CourseCard: React.FC<Course> = ({
   shortDescription,
   imageLink,
   price,
+  discountedPrice,
   productCount
 
 }) => {
+  const hasDiscount = discountedPrice != null && parseFloat(String(discountedPrice)) > 0 && parseFloat(String(discountedPrice)) < Number(price);
   // Calculate star ratings
   // const fullStars = Math.floor(rating);
   // const hasHalfStar = rating % 1 >= 0.5;
@@ -57,7 +59,10 @@ const CourseCard: React.FC<Course> = ({
         </div>
         
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <span className="text-lg font-bold text-primary">₹{price}</span>
+          <span className="text-lg font-bold text-primary">₹{hasDiscount ? discountedPrice : price}</span>
+          {hasDiscount && (
+            <span className="ml-2 text-sm font-normal text-gray-400 line-through">₹{price}</span>
+          )}
         </div>
       </div>
     </div>

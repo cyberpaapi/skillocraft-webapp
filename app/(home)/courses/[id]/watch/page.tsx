@@ -37,6 +37,42 @@ export default function CourseWatchPage() {
   const [ordered, setOrdered] = useState(false);
   const watchTimeRef = useRef<number>(0);
 
+  // Doubt clearing + certificate request
+  const [doubtOpen, setDoubtOpen] = useState(false);
+  const [doubtMessage, setDoubtMessage] = useState('');
+  const [submittingDoubt, setSubmittingDoubt] = useState(false);
+  const [requestingCert, setRequestingCert] = useState(false);
+  const [certRequested, setCertRequested] = useState(false);
+
+  const submitDoubt = async () => {
+    setSubmittingDoubt(true);
+    try {
+      await axiosHomeProtected.post('/doubt-requests', { courseId: id, message: doubtMessage.trim() || undefined });
+      toast.success('Your doubt clearing request has been submitted!');
+      setDoubtOpen(false);
+      setDoubtMessage('');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit request.';
+      toast.error(msg);
+    } finally {
+      setSubmittingDoubt(false);
+    }
+  };
+
+  const requestCertificate = async () => {
+    setRequestingCert(true);
+    try {
+      await axiosHomeProtected.post('/certificate-requests', { courseId: id });
+      toast.success('Certificate request submitted! We will email it to you.');
+      setCertRequested(true);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to request certificate.';
+      toast.error(msg);
+    } finally {
+      setRequestingCert(false);
+    }
+  };
+
   // Fetch course (with chapters)
   const { data: course, isLoading, error } = useQuery<CourseDetails>({
     queryKey: ['course-watch', id],
@@ -207,29 +243,53 @@ export default function CourseWatchPage() {
               {activeProduct && (
                 <h2 className="mt-1 text-lg font-medium text-primary">{activeProduct.name}</h2>
               )}
+              {/* About Course */}
+              {course.longDescription && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">About Course</h3>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{course.longDescription}</p>
+                </div>
+              )}
+
               {activeProduct?.description && (
                 <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-1">About this chapter</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-1">About this lesson</h3>
                   <p className="text-sm text-gray-700 leading-relaxed">{activeProduct.description}</p>
                 </div>
               )}
 
+              {/* Download Content */}
               {downloads && downloads.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-2">Resources</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Download Content</h3>
+                  <p className="text-xs text-gray-500 mb-2">Select and download the materials you need.</p>
                   <div className="space-y-2">
                     {downloads.map((dl) => {
                       const href = dl.fileUrl.startsWith('http') ? dl.fileUrl : `${API_BASE}${dl.fileUrl}`;
                       return (
                         <a key={dl.id} href={href} download target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 border border-orange-500 text-orange-500 hover:bg-orange-50 font-medium py-2 px-3 rounded text-sm transition-colors">
-                          📄 {dl.fileName}
+                          className="flex items-center justify-between gap-2 border border-orange-500 text-orange-500 hover:bg-orange-50 font-medium py-2 px-3 rounded-lg text-sm transition-colors">
+                          <span className="flex items-center gap-2 min-w-0"><span>📄</span><span className="truncate">{dl.fileName}</span></span>
+                          <span className="shrink-0 text-xs font-semibold">Download</span>
                         </a>
                       );
                     })}
                   </div>
                 </div>
               )}
+
+              {/* Request Certificate */}
+              <div className="mt-6 bg-white rounded-2xl shadow p-4">
+                <h3 className="text-base font-semibold text-gray-800">Course Certificate</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Finished the course? Request your certificate and our team will email it to you.</p>
+                <button
+                  onClick={requestCertificate}
+                  disabled={requestingCert || certRequested}
+                  className="mt-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg disabled:opacity-60"
+                >
+                  {certRequested ? '✓ Certificate Requested' : requestingCert ? 'Requesting…' : '🎓 Request Certificate'}
+                </button>
+              </div>
             </div>
 
             {/* Chapter list */}
@@ -270,10 +330,49 @@ export default function CourseWatchPage() {
                   )}
                 </div>
               </div>
+
+              {/* Doubt Clearing Session */}
+              <div className="bg-white rounded-2xl shadow p-5 text-center">
+                <h3 className="text-lg font-bold text-secondary">Doubt Clearing Session</h3>
+                <p className="text-sm text-gray-500 mt-1">Stuck somewhere? Request a callback and our team will help you.</p>
+                <button
+                  onClick={() => setDoubtOpen(true)}
+                  className="mt-3 w-full bg-secondary hover:bg-secondary/90 text-white font-semibold py-2 rounded-lg transition-colors"
+                >
+                  💬 Join Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Doubt Clearing Modal */}
+      {doubtOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setDoubtOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-semibold text-gray-800">Request for Doubt Clearing</h3>
+              <button onClick={() => setDoubtOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Our team will reach out to help you with <span className="font-medium">{course.name}</span>. Add a note about what you&apos;re stuck on (optional).</p>
+            <textarea
+              placeholder="Describe your doubt (optional)"
+              value={doubtMessage}
+              onChange={(e) => setDoubtMessage(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary resize-none mb-3"
+            />
+            <button
+              onClick={submitDoubt}
+              disabled={submittingDoubt}
+              className="w-full bg-secondary hover:bg-secondary/90 text-white font-semibold py-2 rounded-lg disabled:opacity-60"
+            >
+              {submittingDoubt ? 'Submitting…' : 'Submit Request'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

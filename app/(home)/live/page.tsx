@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import LiveHeroCarousel from "@/components/live/LiveHeroCarousel";
 import CreatorHome from "@/components/home/Creators";
+import FaqSection from "@/components/common/FaqSection";
 import { FiSearch, FiMapPin, FiStar, FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { IoCalendarOutline } from "react-icons/io5";
 import { axiosHomePublic } from "@/services/axiosHomeService";
@@ -20,6 +21,8 @@ const INDIAN_CITIES = [
   { name: "Chennai",    emoji: "⛩️" },
   { name: "Kolkata",    emoji: "🏟️" },
   { name: "Kochi",      emoji: "🌴" },
+  { name: "Jaipur",     emoji: "🏤" },
+  { name: "Lucknow",    emoji: "🕋" },
 ];
 
 const GENRES = ["Live", "Banking", "Baking", "Perfume", "Makeup", "Cooking", "Healthcare", "Art"];
@@ -118,6 +121,7 @@ interface ApiEvent {
   venue: string;
   price: string;
   category: string;
+  mode?: string;
   featured: boolean;
   status: string;
 }
@@ -261,7 +265,7 @@ export default function LivePage() {
 
       {/* City tiles row */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex flex-wrap justify-center gap-3 pb-1">
           {[{ name: "All Cities", emoji: "🌐" }, ...INDIAN_CITIES].map(city => (
             <button
               key={city.name}
@@ -398,7 +402,7 @@ export default function LivePage() {
 
       {/* Online Live Events */}
       {(() => {
-        const onlineEvents = apiEvents.filter(e => e.category?.toLowerCase().includes("online"));
+        const onlineEvents = apiEvents.filter(e => (e.mode || "").toLowerCase() === "online");
         if (onlineEvents.length === 0) return null;
         return (
           <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -420,18 +424,18 @@ export default function LivePage() {
         );
       })()}
 
-      {/* Outdoor Live Events */}
+      {/* Offline Live Events */}
       {(() => {
-        const outdoorEvents = apiEvents.filter(e => e.category?.toLowerCase().includes("outdoor"));
-        if (outdoorEvents.length === 0) return null;
+        const offlineEvents = apiEvents.filter(e => (e.mode || "").toLowerCase() === "offline");
+        if (offlineEvents.length === 0) return null;
         return (
           <section className="bg-gray-50 py-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Outdoor <span className="text-primary">Live Events</span>
+                Offline <span className="text-primary">Live Events</span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {outdoorEvents.map(event => (
+                {offlineEvents.map(event => (
                   <Link key={event.id} href={`/live/${event.id}`} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 group block">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <Image src={event.imageLink?.startsWith("http") ? event.imageLink : event.imageLink ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${event.imageLink}` : `/events_${(parseInt(event.id?.slice(-1) || "1") % 9) + 1}.png`} alt={event.title} fill className="object-cover group-hover:scale-105 transition-transform" />
@@ -492,6 +496,10 @@ export default function LivePage() {
           </div>
         </div>
       </section>
+
+      {/* General FAQs (admin-tagged for Live Online / Live Offline) */}
+      <FaqSection location="live_online" title="Online Events" highlight="FAQs" />
+      <FaqSection location="live_offline" title="Offline Events" highlight="FAQs" />
     </div>
   );
 }

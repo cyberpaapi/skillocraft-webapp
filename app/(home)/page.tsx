@@ -8,6 +8,7 @@ import CreatorHome from "@/components/home/Creators";
 import TestimonialHome from "@/components/home/Testimonial";
 import FoundersHome from "@/components/home/Founders";
 import JoinHome from "@/components/home/Join";
+import FaqSection from "@/components/common/FaqSection";
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
       <CreatorHome />
       <TestimonialHome />
       <FoundersHome />
+      <FaqSection location="homepage" />
       <JoinHome />
     </>
   );

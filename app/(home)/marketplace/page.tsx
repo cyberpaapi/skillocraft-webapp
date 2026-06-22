@@ -7,6 +7,7 @@ import { FiSearch, FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { axiosHomePublic } from "@/services/axiosHomeService";
 import { imgSrc } from "@/lib/imgSrc";
 import { Loader2 } from "lucide-react";
+import FaqSection from "@/components/common/FaqSection";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ const BANNER_FALLBACK_IMG = ["/courses_3.png", "/courses_2.png"];
 // ─── Small Product Card ────────────────────────────────────────────────────────
 
 function ProductCard({ product, index }: { product: MarketplaceProduct; index: number }) {
-  const img = product.images?.[0] || imgSrc(undefined, `/courses_${(index % 6) + 1}.png`);
+  const img = imgSrc(product.images?.[0], `/courses_${(index % 6) + 1}.png`);
 
   return (
     <Link href={`/marketplace/${product.id}`} className="block flex-none w-36 sm:w-44 group">
@@ -237,7 +238,7 @@ export default function MarketplacePage() {
               ) : filtered.map(p => (
                 <Link key={p.id} href={p._dummy ? "#" : `/marketplace/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" onClick={() => setSearch("")}>
                   <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                    <Image src={p.images?.[0] || "/courses_1.png"} alt={p.name} fill className="object-cover" />
+                    <Image src={imgSrc(p.images?.[0], "/courses_1.png")} alt={p.name} fill unoptimized className="object-cover" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 line-clamp-1">{p.name}</p>
@@ -325,7 +326,7 @@ export default function MarketplacePage() {
             <Link href={offers[offersCarouselIdx] ? `/marketplace/${offers[offersCarouselIdx].id}` : "#"} className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-900 shadow-lg cursor-pointer block">
               {offers.slice(0, 4).map((product, i) => (
                 <div key={product.id} className={`absolute inset-0 transition-opacity duration-700 ${i === offersCarouselIdx ? "opacity-100" : "opacity-0"}`}>
-                  <Image src={product.images?.[0] || `/courses_${(i % 6) + 1}.png`} alt={product.name} fill className="object-cover" />
+                  <Image src={imgSrc(product.images?.[0], `/courses_${(i % 6) + 1}.png`)} alt={product.name} fill className="object-cover" />
                 </div>
               ))}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -350,7 +351,7 @@ export default function MarketplacePage() {
             {offers.slice(0, 6).map((product, i) => (
               <Link key={product.id} href={`/marketplace/${product.id}`} className="group">
                 <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow">
-                  <Image src={product.images?.[0] || `/courses_${(i % 6) + 1}.png`} alt={product.name} fill sizes="200px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <Image src={imgSrc(product.images?.[0], `/courses_${(i % 6) + 1}.png`)} alt={product.name} fill sizes="200px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">SALE</div>
                 </div>
                 <p className="text-xs font-semibold text-gray-800 mt-1.5 line-clamp-2">{product.name}</p>
@@ -380,6 +381,9 @@ export default function MarketplacePage() {
           ))}
         </div>
       </section>
+
+      {/* FAQs (admin-tagged for Marketplace) */}
+      <FaqSection location="marketplace" />
     </div>
   );
 }

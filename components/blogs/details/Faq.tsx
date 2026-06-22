@@ -29,9 +29,9 @@ type FAQResponse = {
 const FaqBlogDetails = () => {
   // Fetch FAQs from API
   const { data, isLoading } = useQuery<FAQResponse>({
-    queryKey: ['general-faqs'],
+    queryKey: ['general-faqs', 'blogs'],
     queryFn: async () => {
-      const response = await axiosHomePublic.get('/general-faqs');
+      const response = await axiosHomePublic.get('/general-faqs?location=blogs');
       return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

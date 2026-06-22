@@ -18,6 +18,8 @@ type CartItem = {
   imageLink: string;
   shortDescription: string;
   price: string;
+  originalPrice?: string;
+  discountedPrice?: string | null;
   orderCount: number;
 };
 
@@ -289,7 +291,12 @@ export default function ContentMain() {
                       </div>
                       <p className="text-gray-500 text-sm mt-1 line-clamp-2">{item.shortDescription}</p>
                       <div className="mt-3 flex items-center justify-between">
-                        <span className="text-lg font-bold text-orange-500">₹{parseFloat(item.price).toFixed(2)}</span>
+                        <span className="text-lg font-bold text-orange-500">
+                          ₹{parseFloat(item.price).toFixed(2)}
+                          {item.discountedPrice && item.originalPrice && (
+                            <span className="ml-2 text-sm font-normal text-gray-400 line-through">₹{parseFloat(item.originalPrice).toFixed(2)}</span>
+                          )}
+                        </span>
                         <div className="flex items-center gap-1 text-xs text-gray-400">
                           <FaStar className="text-yellow-400" />
                           <span className="text-gray-600">4.8</span>

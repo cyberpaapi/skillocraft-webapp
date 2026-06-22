@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useModal } from '@/context/ModalContext';
 import { toast } from 'sonner';
 import { ArrowLeft, Star, ShoppingCart, Zap, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { imgSrc } from '@/lib/imgSrc';
 import type { MarketplaceProduct } from '../page';
 
 // ─── Dummy fallback ───────────────────────────────────────────────────────────
@@ -31,8 +32,10 @@ export default function MarketplaceProductPage() {
   const [product, setProduct] = useState<MarketplaceProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
-  const [inCart, setInCart] = useState(false);
-  const [addingToCart, setAddingToCart] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [orderForm, setOrderForm] = useState({ recipientName: '', phone: '', addressLine: '', city: '', state: '', pinCode: '' });
   const [relatedProducts, setRelatedProducts] = useState<MarketplaceProduct[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -56,24 +59,34 @@ export default function MarketplaceProductPage() {
       .catch(() => setRelatedProducts(DUMMY_PRODUCTS));
   }, []);
 
-  const handleAddToCart = async () => {
+  const openCheckout = () => {
     if (!isLoggedIn) { openModal('login'); return; }
-    if (inCart) { router.push('/cart'); return; }
-    try {
-      setAddingToCart(true);
-      await axiosHomeProtected.post('/marketplace-cart', { productId: id });
-      setInCart(true);
-      toast.success('Added to cart!');
-    } catch {
-      toast.error('Failed to add to cart');
-    } finally {
-      setAddingToCart(false);
-    }
+    setCheckoutOpen(true);
   };
 
-  const handleBuyNow = () => {
-    if (!isLoggedIn) { openModal('login'); return; }
-    router.push(`/marketplace/checkout?productId=${id}`);
+  const setOrderField = (k: keyof typeof orderForm, v: string) =>
+    setOrderForm((prev) => ({ ...prev, [k]: v }));
+
+  const placeOrder = async () => {
+    if (!orderForm.addressLine.trim() || !orderForm.pinCode.trim()) {
+      toast.error('Please enter your delivery address and pincode');
+      return;
+    }
+    setPlacing(true);
+    try {
+      await axiosHomeProtected.post('/marketplace-orders', {
+        productId: id,
+        quantity,
+        ...orderForm,
+      });
+      toast.success('Order placed successfully! Pay on delivery.');
+      setCheckoutOpen(false);
+      router.push('/thankyou');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to place order');
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (loading) {
@@ -92,7 +105,7 @@ export default function MarketplaceProductPage() {
   const originalPrice = parseFloat(product.originalPrice || product.price);
   const salePrice = parseFloat(product.price);
   const discountPct = product.discount || String(Math.round((1 - salePrice / originalPrice) * 100));
-  const images = product.images?.length ? product.images : ['/courses_1.png'];
+  const images = product.images?.length ? product.images.map((im) => imgSrc(im, '/courses_1.png')) : ['/courses_1.png'];
 
   const relatedByCategory = relatedProducts.filter(p => p.category === product.category && p.id !== product.id);
   const bakingProducts = relatedProducts.filter(p => p.category?.toLowerCase().includes('baking') && p.id !== product.id);
@@ -206,17 +219,21 @@ export default function MarketplaceProductPage() {
             )}
 
             {/* CTA buttons */}
-            <div className="flex gap-3 flex-wrap pt-2">
+            <div className="flex items-center gap-3 flex-wrap pt-2">
+              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+                <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="px-3 py-2.5 text-gray-600 hover:bg-gray-50">−</button>
+                <span className="px-4 text-sm font-semibold">{quantity}</span>
+                <button onClick={() => setQuantity(q => q + 1)} className="px-3 py-2.5 text-gray-600 hover:bg-gray-50">+</button>
+              </div>
               <button
-                onClick={handleAddToCart}
-                disabled={addingToCart}
-                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-xl transition-colors disabled:opacity-60 text-sm shadow-md"
+                onClick={openCheckout}
+                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm shadow-md"
               >
                 <ShoppingCart size={16} />
-                {addingToCart ? 'Adding…' : inCart ? 'Go to Cart' : 'Add to cart'}
+                Add to cart
               </button>
               <button
-                onClick={handleBuyNow}
+                onClick={openCheckout}
                 className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm shadow-md"
               >
                 <Zap size={16} />
@@ -286,6 +303,36 @@ export default function MarketplaceProductPage() {
           </h2>
           <RelatedScroll products={bakingProducts} />
         </section>
+      )}
+
+      {/* ── Checkout (Cash on Delivery) ──────────────────────────────── */}
+      {checkoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setCheckoutOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md my-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-semibold text-gray-800">Delivery Details</h3>
+              <button onClick={() => setCheckoutOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              {quantity} × <span className="font-medium">{product.name}</span> — ₹{(parseFloat(product.price) * quantity).toLocaleString()} (Cash on Delivery)
+            </p>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <input value={orderForm.recipientName} onChange={(e) => setOrderField('recipientName', e.target.value)} placeholder="Full name" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input value={orderForm.phone} onChange={(e) => setOrderField('phone', e.target.value)} placeholder="Phone" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+              <textarea value={orderForm.addressLine} onChange={(e) => setOrderField('addressLine', e.target.value)} placeholder="Address *" rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
+              <div className="grid grid-cols-3 gap-3">
+                <input value={orderForm.city} onChange={(e) => setOrderField('city', e.target.value)} placeholder="City" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input value={orderForm.state} onChange={(e) => setOrderField('state', e.target.value)} placeholder="State" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input value={orderForm.pinCode} onChange={(e) => setOrderField('pinCode', e.target.value)} placeholder="Pincode *" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+              <button onClick={placeOrder} disabled={placing} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 rounded-lg disabled:opacity-60">
+                {placing ? 'Placing order…' : 'Place Order (Cash on Delivery)'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
