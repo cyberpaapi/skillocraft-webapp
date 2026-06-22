@@ -131,15 +131,15 @@ export default function ReferralDashboard() {
         </div>
 
         {/* Referral Code Card */}
-        <div className="bg-secondary text-white md:px-12 p-8 rounded-3xl text-center space-y-4">
+        <div className="bg-secondary text-white md:px-12 px-5 py-8 rounded-3xl text-center space-y-4">
           <p className="text-sm opacity-75">Your unique referral code</p>
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-4xl font-bold tracking-widest font-mono">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+            <span className="text-xl sm:text-3xl md:text-4xl font-bold tracking-wide sm:tracking-widest font-mono break-all">
               {data.referralCode}
             </span>
             <button
               onClick={copyCode}
-              className="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition-colors"
+              className="p-2.5 sm:p-3 rounded-xl bg-white/20 hover:bg-white/30 transition-colors flex-shrink-0"
               title="Copy code"
             >
               {copied ? (
