@@ -23,6 +23,16 @@ const DUMMY_PRODUCTS: MarketplaceProduct[] = [
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) { resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve();
+    document.body.appendChild(script);
+  });
+}
+
 export default function MarketplaceProductPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -34,10 +44,35 @@ export default function MarketplaceProductPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [orderForm, setOrderForm] = useState({ recipientName: '', phone: '', addressLine: '', city: '', state: '', pinCode: '' });
+  const [orderForm, setOrderForm] = useState({ recipientName: '', phone: '', addressLine: '', city: '', state: '', pinCode: '', country: '' });
+  const [hasSavedAddress, setHasSavedAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<MarketplaceProduct[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Load the customer's saved address (if any) to prefill checkout
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    axiosHomeProtected.get('/accounts/addresses')
+      .then(({ data }) => {
+        const list = data?.data || data?.addresses || data || [];
+        const addr = Array.isArray(list) ? list[0] : null;
+        if (addr) {
+          setOrderForm((prev) => ({
+            ...prev,
+            addressLine: addr.address || '',
+            city: addr.city || '',
+            state: addr.state || '',
+            pinCode: addr.pinCode || '',
+            country: addr.country || '',
+          }));
+          setHasSavedAddress(true);
+        }
+      })
+      .catch(() => {});
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (!id) return;
@@ -64,8 +99,38 @@ export default function MarketplaceProductPage() {
     setCheckoutOpen(true);
   };
 
+  const addToCart = async () => {
+    if (!isLoggedIn) { openModal('login'); return; }
+    setAddingToCart(true);
+    try {
+      await axiosHomeProtected.post('/marketplace-cart', { productId: id, quantity });
+      toast.success('Added to cart!');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   const setOrderField = (k: keyof typeof orderForm, v: string) =>
     setOrderForm((prev) => ({ ...prev, [k]: v }));
+
+  const saveAddressIfNew = async () => {
+    // Save the address for next time (only when not already on file)
+    if (hasSavedAddress) return;
+    if (!orderForm.addressLine.trim() || !/^\d{6}$/.test(orderForm.pinCode.trim())) return;
+    try {
+      await axiosHomeProtected.post('/accounts/address', {
+        address: orderForm.addressLine.trim(),
+        city: orderForm.city.trim() || undefined,
+        state: orderForm.state.trim() || undefined,
+        pinCode: orderForm.pinCode.trim(),
+        country: orderForm.country.trim() || undefined,
+      });
+    } catch {
+      // non-critical
+    }
+  };
 
   const placeOrder = async () => {
     if (!orderForm.addressLine.trim() || !orderForm.pinCode.trim()) {
@@ -74,17 +139,66 @@ export default function MarketplaceProductPage() {
     }
     setPlacing(true);
     try {
-      await axiosHomeProtected.post('/marketplace-orders', {
+      // Create the Razorpay order on the backend
+      const { data: orderData } = await axiosHomeProtected.post('/razorpay/marketplace-order', {
         productId: id,
         quantity,
-        ...orderForm,
+        recipientName: orderForm.recipientName,
+        phone: orderForm.phone,
+        addressLine: orderForm.addressLine,
+        city: orderForm.city,
+        state: orderForm.state,
+        pinCode: orderForm.pinCode,
+        country: orderForm.country,
       });
-      toast.success('Order placed successfully! Pay on delivery.');
-      setCheckoutOpen(false);
-      router.push('/thankyou');
+      const { orderId, amount, currency, keyId, totalAmount } = orderData.data;
+
+      await loadRazorpayScript();
+      const rzp = new (window as any).Razorpay({
+        key: keyId,
+        amount,
+        currency,
+        order_id: orderId,
+        name: 'Skillocraft',
+        description: product?.name || 'Marketplace order',
+        image: '/logo.png',
+        theme: { color: '#f97316' },
+        handler: async (response: any) => {
+          try {
+            const { data: verify } = await axiosHomeProtected.post('/razorpay/verify-marketplace', {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              productId: id,
+              quantity,
+              recipientName: orderForm.recipientName,
+              phone: orderForm.phone,
+              addressLine: orderForm.addressLine,
+              city: orderForm.city,
+              state: orderForm.state,
+              pinCode: orderForm.pinCode,
+              country: orderForm.country,
+              totalAmount,
+            });
+            if (verify.status === 1) {
+              await saveAddressIfNew();
+              toast.success('Payment successful — your order is placed!');
+              setCheckoutOpen(false);
+              router.push('/thankyou');
+            } else {
+              toast.error('Payment verification failed. Contact support.');
+            }
+          } catch (e: any) {
+            toast.error(e?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setPlacing(false);
+          }
+        },
+        modal: { ondismiss: () => setPlacing(false) },
+      });
+      rzp.open();
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Failed to place order');
-    } finally {
+      toast.error(e?.response?.data?.message || 'Failed to start payment');
       setPlacing(false);
     }
   };
@@ -226,11 +340,12 @@ export default function MarketplaceProductPage() {
                 <button onClick={() => setQuantity(q => q + 1)} className="px-3 py-2.5 text-gray-600 hover:bg-gray-50">+</button>
               </div>
               <button
-                onClick={openCheckout}
-                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm shadow-md"
+                onClick={addToCart}
+                disabled={addingToCart}
+                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm shadow-md disabled:opacity-60"
               >
                 <ShoppingCart size={16} />
-                Add to cart
+                {addingToCart ? 'Adding…' : 'Add to cart'}
               </button>
               <button
                 onClick={openCheckout}
@@ -305,7 +420,7 @@ export default function MarketplaceProductPage() {
         </section>
       )}
 
-      {/* ── Checkout (Cash on Delivery) ──────────────────────────────── */}
+      {/* ── Checkout (Razorpay) ──────────────────────────────────────── */}
       {checkoutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setCheckoutOpen(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md my-4 p-6" onClick={(e) => e.stopPropagation()}>
@@ -314,23 +429,40 @@ export default function MarketplaceProductPage() {
               <button onClick={() => setCheckoutOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              {quantity} × <span className="font-medium">{product.name}</span> — ₹{(parseFloat(product.price) * quantity).toLocaleString()} (Cash on Delivery)
+              {quantity} × <span className="font-medium">{product.name}</span> — ₹{(parseFloat(product.price) * quantity).toLocaleString()}
             </p>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <input value={orderForm.recipientName} onChange={(e) => setOrderField('recipientName', e.target.value)} placeholder="Full name" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input value={orderForm.phone} onChange={(e) => setOrderField('phone', e.target.value)} placeholder="Phone" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+
+            {hasSavedAddress && !editingAddress ? (
+              <div className="space-y-3">
+                <div className="border border-gray-200 rounded-xl p-3 bg-gray-50">
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Deliver to</p>
+                  <p className="text-sm text-gray-800">{orderForm.addressLine}</p>
+                  <p className="text-sm text-gray-600">
+                    {[orderForm.city, orderForm.state, orderForm.pinCode].filter(Boolean).join(', ')}
+                  </p>
+                  <button onClick={() => setEditingAddress(true)} className="mt-2 text-xs text-primary font-semibold hover:underline">Edit address</button>
+                </div>
+                <button onClick={placeOrder} disabled={placing} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 rounded-lg disabled:opacity-60">
+                  {placing ? 'Processing…' : `Confirm & Pay ₹${(parseFloat(product.price) * quantity).toLocaleString()}`}
+                </button>
               </div>
-              <textarea value={orderForm.addressLine} onChange={(e) => setOrderField('addressLine', e.target.value)} placeholder="Address *" rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
-              <div className="grid grid-cols-3 gap-3">
-                <input value={orderForm.city} onChange={(e) => setOrderField('city', e.target.value)} placeholder="City" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input value={orderForm.state} onChange={(e) => setOrderField('state', e.target.value)} placeholder="State" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input value={orderForm.pinCode} onChange={(e) => setOrderField('pinCode', e.target.value)} placeholder="Pincode *" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <input value={orderForm.recipientName} onChange={(e) => setOrderField('recipientName', e.target.value)} placeholder="Full name" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input value={orderForm.phone} onChange={(e) => setOrderField('phone', e.target.value)} placeholder="Phone" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                </div>
+                <textarea value={orderForm.addressLine} onChange={(e) => setOrderField('addressLine', e.target.value)} placeholder="Address *" rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
+                <div className="grid grid-cols-3 gap-3">
+                  <input value={orderForm.city} onChange={(e) => setOrderField('city', e.target.value)} placeholder="City" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input value={orderForm.state} onChange={(e) => setOrderField('state', e.target.value)} placeholder="State" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input value={orderForm.pinCode} onChange={(e) => setOrderField('pinCode', e.target.value)} placeholder="Pincode *" className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                </div>
+                <button onClick={placeOrder} disabled={placing} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 rounded-lg disabled:opacity-60">
+                  {placing ? 'Processing…' : `Pay ₹${(parseFloat(product.price) * quantity).toLocaleString()}`}
+                </button>
               </div>
-              <button onClick={placeOrder} disabled={placing} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 rounded-lg disabled:opacity-60">
-                {placing ? 'Placing order…' : 'Place Order (Cash on Delivery)'}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}

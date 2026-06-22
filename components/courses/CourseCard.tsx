@@ -11,6 +11,10 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
+  const hasDiscount =
+    course.discountedPrice != null &&
+    parseFloat(String(course.discountedPrice)) > 0 &&
+    parseFloat(String(course.discountedPrice)) < Number(course.price);
   return (
     <Link 
       href={`/courses/${course.id}`} 
@@ -57,7 +61,12 @@ export default function CourseCard({ course }: CourseCardProps) {
         </div>
         
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-gray-900">₹{course.price}</span>
+          <span className="text-lg font-bold text-gray-900">
+            ₹{hasDiscount ? course.discountedPrice : course.price}
+            {hasDiscount && (
+              <span className="ml-2 text-sm font-normal text-gray-400 line-through">₹{course.price}</span>
+            )}
+          </span>
           <Button 
             variant="outline" 
             size="sm" 

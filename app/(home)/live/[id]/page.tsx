@@ -30,6 +30,16 @@ interface Event {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) { resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve();
+    document.body.appendChild(script);
+  });
+}
+
 const DUMMY_EVENTS: Event[] = [
   { id: '1', title: 'Professional Baking Masterclass', shortDescription: 'Learn professional baking techniques from an award-winning pastry chef.', description: 'Join us for an immersive hands-on baking masterclass covering croissants, sourdough, pastries, and celebration cakes. All skill levels welcome — materials provided.', date: 'Sat, 12 Apr 2025', time: '10:00 AM', venue: 'Grand Culinary Hall, Mumbai', price: '999', category: 'Baking', featured: true, status: 'ACTIVE' },
   { id: '2', title: 'Artisan Perfume Creation', shortDescription: 'Craft your own signature fragrance using premium natural oils.', description: 'Discover the art of perfumery in this intimate workshop. You will blend your own custom perfume using ethically sourced ingredients and leave with a 30ml bottle of your creation.', date: 'Sat, 15 Apr 2025', time: '2:00 PM', venue: 'The Scent Studio, Delhi', price: '1499', category: 'Perfume', featured: false, status: 'ACTIVE' },
@@ -45,6 +55,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [registered, setRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -70,21 +81,79 @@ export default function EventDetailPage() {
       .catch(() => {});
   }, [id, isLoggedIn]);
 
+  const addToCart = async () => {
+    if (!isLoggedIn) { openModal('login'); return; }
+    setAddingToCart(true);
+    try {
+      await axiosHomeProtected.post('/event-cart', { eventId: id });
+      toast.success('Added to cart!');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const markRegistered = () => {
+    setRegistered(true);
+    if (event) setEvent({ ...event, _count: { EventRegistration: (event._count?.EventRegistration || 0) + 1 } });
+  };
+
   const handleRegister = async () => {
     if (!isLoggedIn) {
       openModal('login');
       return;
     }
+    const price = parseFloat(event?.price || '0');
     setRegistering(true);
     try {
-      await axiosHomeProtected.post(`/events/${id}/register`);
-      setRegistered(true);
-      toast.success('Successfully registered for the event!');
-      if (event) setEvent({ ...event, _count: { EventRegistration: (event._count?.EventRegistration || 0) + 1 } });
+      // Free event — register directly
+      if (!(price > 0)) {
+        await axiosHomeProtected.post(`/events/${id}/register`);
+        markRegistered();
+        toast.success('Successfully registered for the event!');
+        setRegistering(false);
+        return;
+      }
+
+      // Paid event — Razorpay checkout
+      const { data: orderData } = await axiosHomeProtected.post('/razorpay/event-order', { eventId: id });
+      const { orderId, amount, currency, keyId } = orderData.data;
+      await loadRazorpayScript();
+      const rzp = new (window as any).Razorpay({
+        key: keyId,
+        amount,
+        currency,
+        order_id: orderId,
+        name: 'Skillocraft',
+        description: event?.title || 'Event registration',
+        image: '/logo.png',
+        theme: { color: '#f97316' },
+        handler: async (response: any) => {
+          try {
+            const { data: verify } = await axiosHomeProtected.post('/razorpay/verify-event', {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              eventId: id,
+            });
+            if (verify.status === 1) {
+              markRegistered();
+              toast.success('Payment successful — you are registered!');
+            } else {
+              toast.error('Payment verification failed. Contact support.');
+            }
+          } catch (e: any) {
+            toast.error(e?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setRegistering(false);
+          }
+        },
+        modal: { ondismiss: () => setRegistering(false) },
+      });
+      rzp.open();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Registration failed';
-      toast.error(msg);
-    } finally {
+      toast.error(err?.response?.data?.message || 'Registration failed');
       setRegistering(false);
     }
   };
@@ -194,13 +263,24 @@ export default function EventDetailPage() {
                   You&apos;re Registered!
                 </div>
               ) : (
-                <button
-                  onClick={handleRegister}
-                  disabled={registering}
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors"
-                >
-                  {registering ? <><Loader2 size={16} className="animate-spin" /> Registering...</> : 'Register Now'}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleRegister}
+                    disabled={registering}
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors"
+                  >
+                    {registering ? <><Loader2 size={16} className="animate-spin" /> Processing...</> : (isFree ? 'Register Now' : `Pay ₹${event.price} & Register`)}
+                  </button>
+                  {!isFree && (
+                    <button
+                      onClick={addToCart}
+                      disabled={addingToCart}
+                      className="w-full border-2 border-primary text-primary hover:bg-primary/5 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors"
+                    >
+                      {addingToCart ? 'Adding…' : 'Add to Cart'}
+                    </button>
+                  )}
+                </div>
               )}
 
               {!isLoggedIn && !registered && (
