@@ -466,8 +466,6 @@ export default function ContentMain() {
                         <div className="flex items-center gap-1 text-xs text-gray-400">
                           <FaStar className="text-yellow-400" />
                           <span className="text-gray-600">4.8</span>
-                          <span>·</span>
-                          <span>{item.orderCount} students</span>
                         </div>
                       </div>
                     </div>

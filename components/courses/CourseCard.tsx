@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Course } from '@/types';
-import { FiStar, FiUsers, FiArrowRight } from 'react-icons/fi';
+import { FiStar, FiArrowRight } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BsCollectionPlay } from 'react-icons/bs';
@@ -49,11 +49,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           {course.shortDescription}
         </p>
         
-        <div className="font-sans flex items-center justify-between text-sm text-gray-500 mb-4">
-          <div className="flex items-center">
-            <FiUsers className="mr-1" />
-            <span>{course.orderCount} students</span>
-          </div>
+        <div className="font-sans flex items-center text-sm text-gray-500 mb-4">
           <div className="flex items-center">
             <BsCollectionPlay className="mr-1" />
             <span>{course.productCount}</span>
