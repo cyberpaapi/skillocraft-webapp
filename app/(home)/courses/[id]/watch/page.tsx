@@ -320,7 +320,15 @@ export default function CourseWatchPage() {
                           <span className={`block text-sm ${isActive ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                             {index + 1}. {lesson.name}
                           </span>
-                          {dur && <span className="block text-xs text-gray-400 mt-0.5">⏱ {dur}</span>}
+                          <span className="flex items-center gap-2 mt-0.5">
+                            {isActive && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold px-2 py-0.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                                Watching
+                              </span>
+                            )}
+                            {dur && <span className="text-xs text-gray-400">⏱ {dur}</span>}
+                          </span>
                         </span>
                       </button>
                     );

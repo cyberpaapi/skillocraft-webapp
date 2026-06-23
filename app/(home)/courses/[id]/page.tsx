@@ -213,13 +213,18 @@ export default function CoursePage() {
         const res = await axiosHomeProtected.get(`/orders/check/${id}`);
         if (res.data && typeof res.data.ordered === 'boolean') {
           setOrdered(res.data.ordered);
+          // Once purchased, the user should go straight to the watch experience —
+          // they should never land back on the preview/marketing page.
+          if (res.data.ordered) {
+            router.replace(`/courses/${id}/watch`);
+          }
         }
       } catch (err) {
         console.warn('Order check failed', err);
       }
     };
     checkOrdered();
-  }, [authLoading, isLoggedIn, id]);
+  }, [authLoading, isLoggedIn, id, router]);
 
   // Fetch course analytics for logged-in users who have purchased the course
   const { data: courseAnalytics } = useQuery<CourseAnalytics>({
