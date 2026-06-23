@@ -471,8 +471,8 @@ export default function LivePage() {
       </section>
 
       {/* General FAQs (admin-tagged for Live Online / Live Offline) */}
-      <FaqSection location="live_online" title="Online Events" highlight="FAQs" align="right" />
-      <FaqSection location="live_offline" title="Offline Events" highlight="FAQs" align="right" />
+      <FaqSection location="live_online" title="Online Events" highlight="FAQs" />
+      <FaqSection location="live_offline" title="Offline Events" highlight="FAQs" />
     </div>
   );
 }
