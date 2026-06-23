@@ -1,7 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { FiUser, FiShoppingBag, FiSettings, FiLogOut, FiEdit2 } from 'react-icons/fi';
+import { FiUser, FiShoppingBag, FiSettings, FiLogOut } from 'react-icons/fi';
 
 interface ProfileSidebarProps {
   userData: {
@@ -14,14 +14,6 @@ interface ProfileSidebarProps {
 }
 
 const ProfileSidebar = ({ userData, activeTab, onTabChange }: ProfileSidebarProps) => {
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Handle image upload logic here
-      console.log('Image selected:', file);
-    }
-  };
-
   return (
     <div className="w-full md:w-64 flex-shrink-0">
       <div className="bg-white rounded-lg shadow-lg p-6 sticky top-6 transition-all duration-200 hover:shadow-xl">
@@ -34,15 +26,6 @@ const ProfileSidebar = ({ userData, activeTab, onTabChange }: ProfileSidebarProp
                 </AvatarFallback>
               </Avatar>
             </div>
-            <label className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-2 rounded-full cursor-pointer hover:bg-blue-600 transition-colors flex items-center justify-center w-10 h-10 shadow-md">
-              <FiEdit2 className="w-5 h-5" />
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </label>
           </div>
           <h2 className="text-xl font-bold text-gray-900">{userData.name}</h2>
           <p className="text-gray-500 text-sm">{userData.email}</p>

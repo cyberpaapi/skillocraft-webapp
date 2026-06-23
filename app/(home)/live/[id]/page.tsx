@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 import { axiosHomePublic, axiosHomeProtected } from '@/services/axiosHomeService';
@@ -51,6 +52,7 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isLoggedIn } = useAuth();
   const { openModal } = useModal();
+  const queryClient = useQueryClient();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [registered, setRegistered] = useState(false);
@@ -86,6 +88,8 @@ export default function EventDetailPage() {
     setAddingToCart(true);
     try {
       await axiosHomeProtected.post('/event-cart', { eventId: id });
+      // Refresh the navbar cart badge so it reflects the new item immediately
+      queryClient.invalidateQueries({ queryKey: ['navbar-data'] });
       toast.success('Added to cart!');
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Failed to add to cart');

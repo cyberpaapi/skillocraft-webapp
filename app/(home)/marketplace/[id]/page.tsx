@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { axiosHomePublic, axiosHomeProtected } from '@/services/axiosHomeService';
 import { useAuth } from '@/context/AuthContext';
 import { useModal } from '@/context/ModalContext';
@@ -38,6 +39,7 @@ export default function MarketplaceProductPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const { openModal } = useModal();
+  const queryClient = useQueryClient();
 
   const [product, setProduct] = useState<MarketplaceProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,8 @@ export default function MarketplaceProductPage() {
     setAddingToCart(true);
     try {
       await axiosHomeProtected.post('/marketplace-cart', { productId: id, quantity });
+      // Refresh the navbar cart badge so it reflects the new item immediately
+      queryClient.invalidateQueries({ queryKey: ['navbar-data'] });
       toast.success('Added to cart!');
     } catch (e: any) {
       toast.error(e?.response?.data?.message || 'Failed to add to cart');

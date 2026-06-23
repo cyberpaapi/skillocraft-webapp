@@ -281,6 +281,7 @@ export default function ContentMain() {
     try {
       await axiosHomeProtected.delete(`/event-cart/${cartItemId}`);
       refetchEv();
+      invalidateNavbarData();
     } catch { toast.error('Failed to remove item'); }
   };
 

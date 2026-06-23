@@ -22,10 +22,7 @@ const INDIAN_CITIES = [
   { name: "Kolkata",    emoji: "🏟️" },
   { name: "Kochi",      emoji: "🌴" },
   { name: "Jaipur",     emoji: "🏤" },
-  { name: "Lucknow",    emoji: "🕋" },
 ];
-
-const GENRES = ["Live", "Banking", "Baking", "Perfume", "Makeup", "Cooking", "Healthcare", "Art"];
 
 const UPCOMING_EVENTS = [
   { id: 1, tile: 1, title: "Professional Baking Masterclass", category: "Baking", rating: 9.6, votes: "5.12K", image: "", date: "Sat, 12 Apr" },
@@ -127,7 +124,6 @@ interface ApiEvent {
 }
 
 export default function LivePage() {
-  const [activeGenre, setActiveGenre] = useState("Live");
   const [search, setSearch] = useState("");
   const [selectedCity, setSelectedCity] = useState("All Cities");
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
@@ -196,8 +192,7 @@ export default function LivePage() {
   const filteredApiEvents = apiEvents.filter(e => {
     const matchCity = selectedCity === "All Cities" || e.venue.toLowerCase().includes(selectedCity.toLowerCase());
     const matchSearch = !search || e.title.toLowerCase().includes(search.toLowerCase());
-    const matchGenre = activeGenre === "Live" || e.category.toLowerCase().includes(activeGenre.toLowerCase());
-    return matchCity && matchSearch && matchGenre;
+    return matchCity && matchSearch;
   });
 
   return (
@@ -352,28 +347,6 @@ export default function LivePage() {
         </div>
       </section>
 
-      {/* Browse by Genre */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-5">
-          Browse Event by <span className="text-primary">Genre</span>
-        </h2>
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          {GENRES.map((genre) => (
-            <button
-              key={genre}
-              onClick={() => setActiveGenre(genre)}
-              className={`flex-shrink-0 px-5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                activeGenre === genre
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
-        </div>
-      </section>
-
       {/* Explore New World */}
       {(() => {
         const exploreEvents = apiEvents.filter(e => e.category?.toLowerCase().includes("explore"));
@@ -498,8 +471,8 @@ export default function LivePage() {
       </section>
 
       {/* General FAQs (admin-tagged for Live Online / Live Offline) */}
-      <FaqSection location="live_online" title="Online Events" highlight="FAQs" />
-      <FaqSection location="live_offline" title="Offline Events" highlight="FAQs" />
+      <FaqSection location="live_online" title="Online Events" highlight="FAQs" align="right" />
+      <FaqSection location="live_offline" title="Offline Events" highlight="FAQs" align="right" />
     </div>
   );
 }
