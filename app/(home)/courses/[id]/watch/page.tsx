@@ -306,6 +306,38 @@ export default function CourseWatchPage() {
                   {certRequested ? '✓ Certificate Requested' : requestingCert ? 'Requesting…' : '🎓 Request Certificate'}
                 </button>
               </div>
+
+              {/* WhatsApp group join block — shown on every course watch page, below the certificate */}
+              <div className="mt-6 bg-white rounded-2xl shadow border border-gray-100 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+                <div className="p-6 sm:p-8 flex flex-col justify-center">
+                  <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                    <FaWhatsapp className="text-green-500" /> WhatsApp
+                  </h3>
+                  <p className="mt-1 text-lg text-gray-600">Join Skillocraft Group</p>
+                  <a
+                    href={waLink || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 self-start inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2.5 rounded-full transition-colors"
+                  >
+                    <FaWhatsapp /> Join Now
+                  </a>
+                </div>
+                {waImage ? (
+                  <div className="relative min-h-[180px] bg-gray-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgSrc(waImage)}
+                      alt="Join Skillocraft WhatsApp group"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative min-h-[180px] flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600">
+                    <FaWhatsapp className="text-white/90 text-7xl" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Chapter list */}
@@ -368,38 +400,6 @@ export default function CourseWatchPage() {
               </div>
             </div>
           </div>
-
-          {/* WhatsApp group join block */}
-          {waLink && (
-            <section className="mt-8">
-              <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden grid grid-cols-1 md:grid-cols-2">
-                <div className="p-6 sm:p-8 flex flex-col justify-center">
-                  <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                    <FaWhatsapp className="text-green-500" /> WhatsApp
-                  </h3>
-                  <p className="mt-1 text-lg text-gray-600">Join Skillocraft Group</p>
-                  <a
-                    href={waLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 self-start inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2.5 rounded-full transition-colors"
-                  >
-                    <FaWhatsapp /> Join Now
-                  </a>
-                </div>
-                {waImage && (
-                  <div className="relative min-h-[180px] bg-gray-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imgSrc(waImage)}
-                      alt="Join Skillocraft WhatsApp group"
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
         </div>
       </div>
 
