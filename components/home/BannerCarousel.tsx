@@ -12,13 +12,9 @@ interface Banner {
   imageLink: string;
 }
 
-const FALLBACK_BANNERS: Banner[] = [
-  { id: 'f1', name: 'Start Your Own Perfume Brand', description: 'Professional Perfume Making Course at just ₹699/-', imageLink: '/events_1.png' },
-  { id: 'f2', name: 'Master the Art of Baking', description: 'Learn from award-winning pastry chefs. Enroll today!', imageLink: '/events_2.png' },
-  { id: 'f3', name: 'Skillocraft Live Events', description: 'Join hands-on workshops near you', imageLink: '/events_3.png' },
-  { id: 'f4', name: 'Handmade Jewellery Courses', description: 'Turn your passion into a profitable skill', imageLink: '/events_4.png' },
-  { id: 'f5', name: 'Professional Makeup Masterclass', description: 'Industry-certified courses by top experts', imageLink: '/events_5.png' },
-];
+// Module-level cache so navigating away and back to the home page paints the
+// real banners instantly (no fetch flash) instead of any placeholder.
+let cachedBanners: Banner[] | null = null;
 
 function useVisibleCount() {
   const [count, setCount] = useState(3);
@@ -32,9 +28,11 @@ function useVisibleCount() {
 }
 
 export default function BannerCarousel() {
-  // Seed with fallback banners so the carousel paints instantly, then swap in
-  // the real banners once the API responds (no blank gap on first load).
-  const [banners, setBanners] = useState<Banner[]>(FALLBACK_BANNERS);
+  // Start from the cached real banners (instant on return navigation) or empty.
+  // Never seed with placeholder/dummy images — show a neutral skeleton until the
+  // real banners load so dummy course images never flash in the home banner.
+  const [banners, setBanners] = useState<Banner[]>(cachedBanners ?? []);
+  const [loading, setLoading] = useState<boolean>(cachedBanners === null);
   const [current, setCurrent] = useState(0);
   const visibleCount = useVisibleCount();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,9 +48,11 @@ export default function BannerCarousel() {
         const valid = all
           .filter(b => isValidImage(b.imageLink))
           .map(b => ({ ...b }));
-        if (valid.length > 0) setBanners(valid);
+        cachedBanners = valid;
+        setBanners(valid);
       })
-      .catch(() => {/* keep fallback banners */});
+      .catch(() => {/* keep whatever we have */})
+      .finally(() => setLoading(false));
   }, []);
 
   const maxCurrent = Math.max(0, banners.length - visibleCount);
@@ -74,7 +74,24 @@ export default function BannerCarousel() {
     return () => clearInterval(t);
   }, [banners.length, visibleCount, next]);
 
-  if (banners.length === 0) return null;
+  // While the real banners are still loading, show a neutral skeleton (never
+  // dummy images). Once loaded with nothing configured, render nothing.
+  if (banners.length === 0) {
+    if (!loading) return null;
+    return (
+      <section className="w-full bg-gray-50 py-4">
+        <div className="relative overflow-hidden w-full">
+          <div className="flex">
+            {Array.from({ length: visibleCount }).map((_, i) => (
+              <div key={i} className="flex-none px-1.5" style={{ width: `${100 / visibleCount}%` }}>
+                <div className="aspect-[16/10] rounded-xl bg-gray-200 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // translateX% is relative to the track width (= banners.length * cardWidth).
   // One step = 1 card = 100/banners.length % of the track — independent of visibleCount.

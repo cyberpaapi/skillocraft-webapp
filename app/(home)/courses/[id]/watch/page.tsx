@@ -11,6 +11,8 @@ import VideoPlayer from '@/components/common/VideoPlayer';
 import VdoCipherPlayer from '@/components/common/VdoCipherPlayer';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { FaWhatsapp } from 'react-icons/fa';
+import { imgSrc } from '@/lib/imgSrc';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -35,6 +37,8 @@ export default function CourseWatchPage() {
   const [vdoOtp, setVdoOtp] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [ordered, setOrdered] = useState(false);
+  const [waLink, setWaLink] = useState('');
+  const [waImage, setWaImage] = useState('');
   const watchTimeRef = useRef<number>(0);
 
   // Doubt clearing + certificate request
@@ -105,6 +109,18 @@ export default function CourseWatchPage() {
     };
     check();
   }, [authLoading, isLoggedIn, id]);
+
+  // WhatsApp group join block (admin-configured via site settings)
+  useEffect(() => {
+    axiosHomePublic
+      .get('/site-settings?keys=course_whatsapp_link,course_whatsapp_image')
+      .then(({ data }) => {
+        const d = data?.data || {};
+        if (d.course_whatsapp_link) setWaLink(d.course_whatsapp_link);
+        if (d.course_whatsapp_image) setWaImage(d.course_whatsapp_image);
+      })
+      .catch(() => {});
+  }, []);
 
   const products: Product[] = course?.products || [];
   const activeProduct = products.find((p) => p.id === activeId) || products[0] || null;
@@ -352,6 +368,38 @@ export default function CourseWatchPage() {
               </div>
             </div>
           </div>
+
+          {/* WhatsApp group join block */}
+          {waLink && (
+            <section className="mt-8">
+              <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+                <div className="p-6 sm:p-8 flex flex-col justify-center">
+                  <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                    <FaWhatsapp className="text-green-500" /> WhatsApp
+                  </h3>
+                  <p className="mt-1 text-lg text-gray-600">Join Skillocraft Group</p>
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 self-start inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2.5 rounded-full transition-colors"
+                  >
+                    <FaWhatsapp /> Join Now
+                  </a>
+                </div>
+                {waImage && (
+                  <div className="relative min-h-[180px] bg-gray-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgSrc(waImage)}
+                      alt="Join Skillocraft WhatsApp group"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
