@@ -93,9 +93,11 @@ export default function BannerCarousel() {
     );
   }
 
-  // translateX% is relative to the track width (= banners.length * cardWidth).
-  // One step = 1 card = 100/banners.length % of the track — independent of visibleCount.
-  const translatePct = current * (100 / banners.length);
+  // Each card takes (100 / visibleCount)% of the carousel width, and translateX%
+  // is relative to that same width — so one step = one card = (100 / visibleCount)%.
+  // (Using banners.length here only shifted a fraction of an image per step on
+  // mobile, where visibleCount is 1.)
+  const translatePct = current * (100 / visibleCount);
 
   return (
     <section className="w-full bg-gray-50 py-4">

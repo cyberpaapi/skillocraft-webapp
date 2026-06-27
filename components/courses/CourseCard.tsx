@@ -15,6 +15,13 @@ export default function CourseCard({ course }: CourseCardProps) {
     course.discountedPrice != null &&
     parseFloat(String(course.discountedPrice)) > 0 &&
     parseFloat(String(course.discountedPrice)) < Number(course.price);
+
+  // Shrink the category badge font when it contains a long word (e.g.
+  // "Confectionary") so it doesn't get cut off on small screens.
+  const longestCategoryWord = (course.category?.name || '')
+    .split(/\s+/)
+    .reduce((max, word) => Math.max(max, word.length), 0);
+  const categorySizeClass = longestCategoryWord > 9 ? 'text-[9px]' : 'text-xs';
   return (
     <Link 
       href={`/courses/${course.id}`} 
@@ -27,7 +34,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="font-sans absolute top-2 right-2 bg-secondary text-white text-xs font-semibold px-2 py-1 rounded">
+        <div className={`font-sans absolute top-2 right-2 bg-secondary text-white ${categorySizeClass} font-semibold px-2 py-1 rounded max-w-[calc(100%-1rem)] whitespace-nowrap overflow-hidden text-ellipsis`}>
           {course.category.name}
         </div>
       </div>
