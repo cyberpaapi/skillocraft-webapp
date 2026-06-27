@@ -34,7 +34,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className={`font-sans absolute top-2 right-2 bg-secondary text-white ${categorySizeClass} font-semibold px-2 py-1 rounded max-w-[calc(100%-1rem)] whitespace-nowrap overflow-hidden text-ellipsis`}>
+        <div className={`font-sans absolute top-2 right-2 bg-secondary text-white ${categorySizeClass} font-semibold px-2 py-1 rounded max-w-[calc(100%-1rem)] leading-tight break-words text-right`}>
           {course.category.name}
         </div>
       </div>
