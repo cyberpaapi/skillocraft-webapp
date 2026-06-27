@@ -5,9 +5,10 @@ import { useModal } from '@/context/ModalContext';
 import { useAuth } from '@/context/AuthContext';
 import { axiosHomePublic } from '@/services/axiosHomeService';
 import { toast } from 'sonner';
-import { X, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { X, Eye, EyeOff, Loader2, CheckCircle2, XCircle, ArrowLeft, MailCheck } from 'lucide-react';
 import Image from 'next/image';
 import { FcGoogle } from 'react-icons/fc';
+import { forgotPasswordApi } from '@/lib/api/auth';
 
 // Must match backend registerSchema password rules
 const PWD_RULES = [
@@ -36,6 +37,11 @@ export default function AuthModal() {
 
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+
+  // Forgot-password flow (within the login view)
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
 
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -116,9 +122,24 @@ export default function AuthModal() {
     }
   };
 
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await forgotPasswordApi(forgotEmail.trim());
+      setForgotSent(true);
+    } catch (err: any) {
+      toast.error(extractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const switchTo = (type: 'login' | 'signup') => {
     setShowPassword(false);
     setShowPwdHints(false);
+    setForgotMode(false);
+    setForgotSent(false);
     openModal(type);
   };
 
@@ -140,6 +161,40 @@ export default function AuthModal() {
           </div>
 
           {modalType === 'login' ? (
+            forgotMode ? (
+              <div className="space-y-4">
+                {forgotSent ? (
+                  <div className="text-center py-4">
+                    <MailCheck className="mx-auto h-12 w-12 text-emerald-500 mb-3" />
+                    <h3 className="font-semibold text-gray-800">Check your email</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      If an account exists for <span className="font-medium">{forgotEmail}</span>, we&apos;ve sent a password reset link. It expires in 60 minutes.
+                    </p>
+                    <button type="button" onClick={() => { setForgotMode(false); setForgotSent(false); }} className="mt-4 inline-flex items-center gap-1 text-sm text-primary font-semibold hover:underline">
+                      <ArrowLeft size={14} /> Back to sign in
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgot} className="space-y-4">
+                    <button type="button" onClick={() => setForgotMode(false)} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+                      <ArrowLeft size={14} /> Back
+                    </button>
+                    <div>
+                      <h3 className="font-semibold text-gray-800">Reset your password</h3>
+                      <p className="text-sm text-gray-500 mt-0.5">Enter your account email and we&apos;ll send you a reset link.</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="you@example.com" className={inputClass} />
+                    </div>
+                    <button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+                      {loading && <Loader2 size={16} className="animate-spin" />}
+                      {loading ? 'Sending…' : 'Send reset link'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -153,6 +208,11 @@ export default function AuthModal() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+              </div>
+              <div className="text-right -mt-1">
+                <button type="button" onClick={() => { setForgotMode(true); setForgotSent(false); setForgotEmail(loginEmail); }} className="text-xs text-primary font-medium hover:underline">
+                  Forgot password?
+                </button>
               </div>
               <button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors mt-2">
                 {loading && <Loader2 size={16} className="animate-spin" />}
@@ -169,6 +229,7 @@ export default function AuthModal() {
                 <button type="button" onClick={() => switchTo('signup')} className="text-primary font-semibold hover:underline">Sign up free</button>
               </p>
             </form>
+            )
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">
               <div>

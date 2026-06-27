@@ -40,6 +40,17 @@ export const refreshCustomerToken = async (refreshToken: string) => {
   return response.data;
 };
 
+// Password reset
+export async function forgotPasswordApi(email: string) {
+  const response = await axiosHomePublic.post('accounts/forgot-password', { email }, authRequestConfig);
+  return response.data;
+}
+
+export async function resetPasswordApi(token: string, newPassword: string) {
+  const response = await axiosHomePublic.post('accounts/reset-password', { token, newPassword }, authRequestConfig);
+  return response.data;
+}
+
 // Common Authentication
 export async function signupApi(data: { email: string; password: string }) {
   const response = await axiosPublic.post('/accounts/register/customer', data, {
