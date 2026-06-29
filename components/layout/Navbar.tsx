@@ -44,15 +44,6 @@ interface NavbarApiResponse {
   data: NavbarData;
 }
 
-// Fallback categories when DB is empty
-const FALLBACK_CATEGORIES: Category[] = [
-  { id: 'baking', name: 'Baking', description: '', status: 'ACTIVE', createdBy: '', createdAt: '', updatedAt: '', featured: false, subCategory: [] },
-  { id: 'banking', name: 'Banking', description: '', status: 'ACTIVE', createdBy: '', createdAt: '', updatedAt: '', featured: false, subCategory: [] },
-  { id: 'perfume', name: 'Perfume', description: '', status: 'ACTIVE', createdBy: '', createdAt: '', updatedAt: '', featured: false, subCategory: [] },
-  { id: 'makeup', name: 'Makeup', description: '', status: 'ACTIVE', createdBy: '', createdAt: '', updatedAt: '', featured: false, subCategory: [] },
-  { id: 'cooking', name: 'Cooking', description: '', status: 'ACTIVE', createdBy: '', createdAt: '', updatedAt: '', featured: false, subCategory: [] },
-  { id: 'healthcare', name: 'Healthcare', description: '', status: 'ACTIVE', createdBy: '', createdAt: '', updatedAt: '', featured: false, subCategory: [] },
-];
 
 // Course Data
 // const courseCategories = [
@@ -137,10 +128,8 @@ const Navbar: React.FC = () => {
   });
   
   useEffect(() => {
-    if (response?.data && response.data.length > 0) {
+    if (response?.data) {
       setCategories(response.data);
-    } else if (response) {
-      setCategories(FALLBACK_CATEGORIES);
     }
   }, [response]);
 

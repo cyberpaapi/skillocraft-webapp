@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { FaRegCirclePlay, FaRegCirclePause } from "react-icons/fa6";
+import { FaRegCirclePlay, FaRegCirclePause, FaVolumeHigh, FaVolumeXmark } from "react-icons/fa6";
 import { axiosPublic } from "@/services/axiosService";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
@@ -11,6 +11,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 const HeroSuccess = () => {
   const [isPlaying, setIsPlaying] = React.useState(false);
+  // Sound is ON by default; users can toggle it. Playback is user-initiated
+  // (play button), so browsers allow unmuted sound.
+  const [isMuted, setIsMuted] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [banners, setBanners] = React.useState<any[]>([]);
   const [bannersLoaded, setBannersLoaded] = React.useState(false);
@@ -33,10 +36,18 @@ const HeroSuccess = () => {
 
   const togglePlayback = () => {
     if (videoRef.current) {
+      videoRef.current.muted = isMuted;
       if (isPlaying) videoRef.current.pause();
       else videoRef.current.play();
       setIsPlaying(!isPlaying);
     }
+  };
+
+  const toggleSound = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !isMuted;
+    setIsMuted(next);
+    if (videoRef.current) videoRef.current.muted = next;
   };
 
   const getBannerSrc = (link: string) =>
@@ -96,7 +107,8 @@ const HeroSuccess = () => {
           className="w-full h-full object-cover"
           poster="/hero/success.jpg"
           loop
-          muted
+          muted={isMuted}
+          playsInline
         >
           <source src={customVideoUrl || "/video/1.mp4"} type="video/mp4" />
         </video>
@@ -108,6 +120,14 @@ const HeroSuccess = () => {
       >
         {isPlaying ? <FaRegCirclePause /> : <FaRegCirclePlay />}
       </div>
+      {/* Sound on/off toggle (sound on by default) */}
+      <button
+        onClick={toggleSound}
+        aria-label={isMuted ? "Unmute video" : "Mute video"}
+        className="absolute bottom-4 right-4 z-20 bg-black/50 hover:bg-black/70 text-white p-2.5 rounded-full transition-colors"
+      >
+        {isMuted ? <FaVolumeXmark className="text-lg" /> : <FaVolumeHigh className="text-lg" />}
+      </button>
     </section>
   );
 };
