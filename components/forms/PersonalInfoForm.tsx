@@ -18,13 +18,14 @@ import { UserData } from '@/types';
 const personalInfoSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   phone: z.string().min(1, 'Phone number is required'),
+  email: z.string().email('Enter a valid email'),
 });
 
 type PersonalInfoFormValues = z.infer<typeof personalInfoSchema>;
 
 interface PersonalInfoFormProps {
-  initialData: Pick<UserData, 'name' | 'phone'>;
-  onSubmit: (data: Pick<UserData, 'name' | 'phone'>) => void;
+  initialData: Pick<UserData, 'name' | 'phone' | 'email'>;
+  onSubmit: (data: Pick<UserData, 'name' | 'phone' | 'email'>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
@@ -40,6 +41,7 @@ export function PersonalInfoForm({
     defaultValues: {
       name: initialData.name,
       phone: initialData.phone,
+      email: initialData.email,
     },
   });
 
@@ -69,6 +71,20 @@ export function PersonalInfoForm({
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
                   <Input placeholder="+1 (555) 123-4567" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="you@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

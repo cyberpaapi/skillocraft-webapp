@@ -11,16 +11,6 @@ import { Testimonial } from "@/types";
 import { axiosHomePublic } from "@/services/axiosHomeService";
 import { toast } from "sonner";
 
-// Group into sets of 4 (like original design)
-const groupIntoSlides = (arr: Testimonial[], size = 4) => {
-  const res = [];
-  for (let i = 0; i < arr.length; i += size) {
-    res.push(arr.slice(i, i + size));
-  }
-  return res;
-};
-
-
 const TestimonialHome:FC = () => {
 
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -45,8 +35,6 @@ const TestimonialHome:FC = () => {
       setTestimonials(response.data);
     }
   }, [response]);
-
-  const testimonialSlides = groupIntoSlides(testimonials, 6);
 
   return (
     // <section className="relative lg:pb-24 pb-12">
@@ -171,16 +159,20 @@ const TestimonialHome:FC = () => {
           </h2>
         </div>
 
-        {/* Testimonial Slider */}
+        {/* Testimonial Slider — 1 card on mobile (auto horizontal scroll), 3 on laptop */}
         <Swiper
           loop={true}
           spaceBetween={16}
           slidesPerView={1}
+          breakpoints={{
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+          }}
           autoplay={{
             delay: 3000,
             disableOnInteraction: false,
           }}
-          speed={3000}
+          speed={1500}
           pagination={{
             clickable: true,
             dynamicBullets: true,
@@ -190,18 +182,9 @@ const TestimonialHome:FC = () => {
           modules={[Pagination, Autoplay]}
           className="pb-10"
         >
-          {testimonialSlides.map((group, slideIndex) => (
-            <SwiperSlide key={slideIndex}>
-              <div className="flex flex-wrap justify-center -mx-2 gap-y-4">
-                {group.map((testimonial, i) => (
-                  <div
-                    key={i}
-                    className="md:w-1/3 w-1/2 px-2"
-                  >
-                    <TestimonialCard {...testimonial} />
-                  </div>
-                ))}
-              </div>
+          {testimonials.map((testimonial, i) => (
+            <SwiperSlide key={i} className="h-auto">
+              <TestimonialCard {...testimonial} />
             </SwiperSlide>
           ))}
         </Swiper>

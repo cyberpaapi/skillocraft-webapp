@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 import { imgSrc } from "@/lib/imgSrc";
+import SuccessStoryExtras from "@/components/success/SuccessStoryExtras";
 
 interface SuccessStory {
   id: string;
@@ -34,7 +35,8 @@ export default async function SuccessStoryPage({ params }: { params: { id: strin
   if (!story) notFound();
 
   return (
-    <main className="container mx-auto py-12 px-4 max-w-3xl">
+    <>
+      <main className="container mx-auto py-12 px-4 max-w-3xl">
       <Link href="/success/inside" className="inline-flex items-center gap-2 text-sm text-primary mb-6 hover:underline">
         ← Back to Success Stories
       </Link>
@@ -92,6 +94,10 @@ export default async function SuccessStoryPage({ params }: { params: { id: strin
           </div>
         </div>
       </div>
-    </main>
+      </main>
+
+      {/* Featured products, CTA, and more success stories */}
+      <SuccessStoryExtras currentId={params.id} />
+    </>
   );
 }

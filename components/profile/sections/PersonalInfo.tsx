@@ -6,6 +6,7 @@ import { UserData, Address } from '@/types';
 import { PersonalInfoForm } from '@/components/forms/PersonalInfoForm';
 import { AddressForm } from '@/components/forms/AddressForm';
 import { axiosHomeProtected } from '@/services/axiosHomeService';
+import { useAuth } from '@/context/AuthContext';
 
 interface PersonalInfoProps {
   userData: UserData;
@@ -13,24 +14,32 @@ interface PersonalInfoProps {
 }
 
 const PersonalInfo = ({ userData, onUpdate }: PersonalInfoProps) => {
+  const { user, login } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [formData, setFormData] = useState(userData);
 
-  const handleSavePersonalInfo = async (data: Pick<UserData, 'name' | 'phone'>) => {
+  const handleSavePersonalInfo = async (data: Pick<UserData, 'name' | 'phone' | 'email'>) => {
     try {
       // Prepare the update payload with only provided fields
-      const updatePayload: { name?: string; contact?: string } = {};
-      
+      const updatePayload: { name?: string; contact?: string; email?: string } = {};
+
       if (data.name !== undefined) updatePayload.name = data.name;
       if (data.phone !== undefined) updatePayload.contact = data.phone;
+      if (data.email && data.email !== userData.email) updatePayload.email = data.email;
 
       // Only make the API call if there are fields to update
       if (Object.keys(updatePayload).length > 0) {
-        await axiosHomeProtected.put('/accounts/customer', updatePayload);
+        const res = await axiosHomeProtected.put('/accounts/customer', updatePayload);
+        // When the email changes, the backend returns fresh tokens (the old JWT
+        // was keyed on the old email) — update the session so it stays valid.
+        const tokens = res.data?.tokens;
+        if (tokens?.accessToken && user) {
+          login(tokens.accessToken, { ...user, email: data.email }, tokens.refreshToken);
+        }
       }
-      
+
       // Update local state
       onUpdate(data);
       setIsEditing(false);
