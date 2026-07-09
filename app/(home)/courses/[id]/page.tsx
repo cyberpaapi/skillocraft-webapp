@@ -340,24 +340,21 @@ export default function CoursePage() {
             <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
               {/* Left: Author Info */}
               <div className="flex items-center gap-3">
-                <div className="relative w-9 h-9">
+                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden bg-gray-200">
                   {course?.creator?.imageLink ? (
                     <Image
                       src={imgSrc(course.creator.imageLink)}
                       alt="Author"
-                      width={36}
-                      height={36}
+                      fill
+                      sizes="36px"
                       className="rounded-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
                     />
-                  ) : null}
-                  {/* Fallback User icon */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-full">
-                    <User className="w-4 h-4 text-gray-500" />
-                  </div>
+                  ) : (
+                    /* Fallback User icon — only when there's no creator image */
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <User className="w-4 h-4 text-gray-500" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="font-medium text-gray-800">{course?.creator?.name}</span>
@@ -802,7 +799,7 @@ export default function CoursePage() {
                   width={400}
                   height={300}
                   unoptimized
-                  className="w-full h-56 object-cover"
+                  className="w-full h-56 object-contain bg-black"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';

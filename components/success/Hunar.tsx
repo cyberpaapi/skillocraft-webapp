@@ -83,7 +83,7 @@ const HunarSuccess = () => {
                   width={900}
                   height={500}
                   unoptimized
-                  className="inline-block w-full max-w-[538px] mx-auto h-auto object-cover rounded-2xl"
+                  className="inline-block w-full max-w-[323px] mx-auto h-auto object-cover rounded-2xl"
                 />
               </SwiperSlide>
             );

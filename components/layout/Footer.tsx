@@ -170,12 +170,15 @@ const Footer: React.FC = () => {
 
         {/* Copyright */}
         <div className="py-6 flex flex-wrap items-center justify-center text-sm gap-2">
-          <span className="inline-block font-light text-gray-300">Copyright © {new Date().getFullYear()} Skillocraft Education</span>
+          <span className="inline-block font-light text-gray-300">Copyright © {new Date().getFullYear()} Skillocraft Pvt. Ltd.</span>
           <span className="inline-block">|</span>
           <span className="inline-block font-light text-gray-300">All Rights Reserved</span>
           <span className="inline-block">|</span>
           <Link href="/terms" className="underline hover:text-primary transition ease-in-out delay-150 duration-300">Terms and Conditions</Link>|
           <Link href="/privacy" className="underline hover:text-primary transition ease-in-out delay-150 duration-300">Privacy Policy</Link>
+        </div>
+        <div className="pb-6 text-center text-xs font-light text-gray-400">
+          CIN No. - U85500WB2024PTC270394
         </div>
       </div>
     </footer>
