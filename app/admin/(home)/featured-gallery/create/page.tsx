@@ -45,11 +45,13 @@ export default function CreateFeaturedGalleryPage() {
       console.error('Error creating gallery item:', error);
       
       let errorMessage = 'Failed to create gallery item';
-      if (error instanceof Error) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        // Prefer the API's own message/error over axios' generic "status code 500"
+        const responseError = error as { response?: { data?: { message?: string; error?: string } } };
+        const data = responseError.response?.data;
+        errorMessage = data?.error || data?.message || errorMessage;
+      } else if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (error && typeof error === 'object' && 'response' in error) {
-        const responseError = error as { response?: { data?: { message?: string } } };
-        errorMessage = responseError.response?.data?.message || errorMessage;
       }
       
       toast.error(errorMessage);
