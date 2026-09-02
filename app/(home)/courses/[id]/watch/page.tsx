@@ -34,6 +34,7 @@ export default function CourseWatchPage() {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [captionUrl, setCaptionUrl] = useState<string | null>(null);
   const [vdoOtp, setVdoOtp] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [ordered, setOrdered] = useState(false);
@@ -141,6 +142,7 @@ export default function CourseWatchPage() {
     const load = async () => {
       setStreamUrl(null);
       setVdoOtp(null);
+      setCaptionUrl(null);
       setVideoError(null);
       const link = activeProduct?.videoLink;
       if (!link) return;
@@ -159,6 +161,8 @@ export default function CourseWatchPage() {
           const url = data?.url || data;
           if (url && typeof url === 'string') setStreamUrl(url);
           else throw new Error('No URL');
+          // Same relative form as the video URL, so it resolves the same way
+          if (typeof data?.captionUrl === 'string') setCaptionUrl(data.captionUrl);
         }
       } catch {
         setStreamUrl(resolved);
@@ -239,6 +243,7 @@ export default function CourseWatchPage() {
                 ) : streamUrl ? (
                   <VideoPlayer
                     src={streamUrl}
+                    captionSrc={captionUrl || undefined}
                     className="w-full h-full"
                     onTimeUpdate={(t) => { watchTimeRef.current = t; }}
                     onPause={sendAnalytics}

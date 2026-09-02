@@ -34,6 +34,7 @@ export default function ProductPage() {
   //const { isLoggedIn } = useAuth();
   const [videoError, setVideoError] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [captionUrl, setCaptionUrl] = useState<string | null>(null);
   const [vdoOtp, setVdoOtp] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const watchTimeRef = useRef<number>(0);
@@ -66,6 +67,7 @@ export default function ProductPage() {
     setIsVideoLoading(true);
     setVideoError(null);
     setVdoOtp(null);
+    setCaptionUrl(null);
 
     const resolved = resolveVideoUrl(product.videoLink);
 
@@ -92,6 +94,8 @@ export default function ProductPage() {
         const url = data?.url || data;
         if (url && typeof url === 'string') setStreamUrl(url);
         else throw new Error('No URL returned');
+        // Same relative form as the video URL, so it resolves the same way
+        if (typeof data?.captionUrl === 'string') setCaptionUrl(data.captionUrl);
       }
     } catch {
       setStreamUrl(resolved);
@@ -177,6 +181,7 @@ export default function ProductPage() {
                 /* HLS / direct video fallback */
                 <VideoPlayer
                   src={streamUrl}
+                  captionSrc={captionUrl || undefined}
                   className="w-full h-full"
                   onTimeUpdate={(t) => { watchTimeRef.current = t; }}
                   onPause={sendAnalytics}

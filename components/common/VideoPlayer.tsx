@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 
 interface VideoPlayerProps {
   src: string;
+  /** WebVTT caption track (English). Omitted when the lesson has no captions. */
+  captionSrc?: string;
   onTimeUpdate?: (currentTime: number) => void;
   onEnded?: () => void;
   onPause?: () => void;
@@ -26,6 +28,7 @@ function formatTime(seconds: number) {
 
 export default function VideoPlayer({
   src,
+  captionSrc,
   onTimeUpdate,
   onEnded,
   onPause,
@@ -45,6 +48,7 @@ export default function VideoPlayer({
   const [loading, setLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [captionsOn, setCaptionsOn] = useState(false);
   const hlsRef = useRef<Hls | null>(null);
   // Stable refs so event-listener closures always call the latest prop callbacks
   const onTimeUpdateRef = useRef(onTimeUpdate);
@@ -150,6 +154,22 @@ export default function VideoPlayer({
     };
   }, [src]);
 
+  // ── Captions ────────────────────────────────────────────────────────────
+  // The browser owns rendering; we only flip the track's mode. Kept in an effect
+  // so it re-applies when the track element mounts or the lesson changes.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !v.textTracks || v.textTracks.length === 0) return;
+    for (let i = 0; i < v.textTracks.length; i++) {
+      v.textTracks[i].mode = captionsOn ? 'showing' : 'hidden';
+    }
+  }, [captionsOn, captionSrc]);
+
+  // A lesson without captions must not keep a stale "on" state
+  useEffect(() => {
+    if (!captionSrc) setCaptionsOn(false);
+  }, [captionSrc]);
+
   // ── Auto-hide controls ──────────────────────────────────────────────────
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
@@ -254,7 +274,17 @@ export default function VideoPlayer({
         playsInline
         preload="metadata"
         onKeyDown={(e) => { if (e.ctrlKey && e.key === 's') e.preventDefault(); }}
-      />
+      >
+        {captionSrc && (
+          <track
+            key={captionSrc}
+            kind="subtitles"
+            srcLang="en"
+            label="English"
+            src={captionSrc}
+          />
+        )}
+      </video>
 
       {/* Buffering spinner */}
       {loading && (
@@ -348,6 +378,23 @@ export default function VideoPlayer({
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Captions */}
+          {captionSrc && (
+            <button
+              onClick={() => setCaptionsOn((on) => !on)}
+              title={captionsOn ? 'Turn off captions' : 'Turn on captions'}
+              aria-pressed={captionsOn}
+              className={cn(
+                'text-xs font-bold leading-none border rounded px-1.5 py-1 mr-1 transition-colors',
+                captionsOn
+                  ? 'bg-white text-black border-white'
+                  : 'text-white border-white/70 hover:border-white'
+              )}
+            >
+              CC
+            </button>
+          )}
 
           {/* Fullscreen */}
           <button onClick={toggleFullscreen} className="text-white hover:text-primary transition-colors">
