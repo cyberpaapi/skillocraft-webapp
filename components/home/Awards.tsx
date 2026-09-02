@@ -132,7 +132,7 @@ const AwardsHome:FC = () => {
         </div>
 
         {/* Image Carousel */}
-        <div className="max-w-3xl mx-auto space-y-5">
+        <div className="max-w-6xl mx-auto space-y-5">
           {gallery.length > 0 && (() => {
             // Pre-duplicate so Swiper always has 9+ real slides — eliminates loop clone gaps
             const minCopies = Math.ceil(9 / gallery.length);
@@ -164,16 +164,16 @@ const AwardsHome:FC = () => {
                 <SwiperSlide key={`${item.id}-${index}`}>
                   {imageUrl ? (
                     item.linkUrl ? (
-                      <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer md:h-72 h-52 flex items-center justify-center">
+                      <a href={item.linkUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer md:h-[432px] h-[312px] flex items-center justify-center">
                         <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="max-h-full w-auto object-contain md:rounded-3xl rounded-2xl" />
                       </a>
                     ) : (
-                      <div className="md:h-72 h-52 flex items-center justify-center">
+                      <div className="md:h-[432px] h-[312px] flex items-center justify-center">
                         <img src={imageUrl} alt={item.description || `Award ${index + 1}`} className="max-h-full w-auto object-contain md:rounded-3xl rounded-2xl" />
                       </div>
                     )
                   ) : (
-                    <div className="w-full md:h-72 h-52 bg-gray-200 rounded-2xl flex items-center justify-center">
+                    <div className="w-full md:h-[432px] h-[312px] bg-gray-200 rounded-2xl flex items-center justify-center">
                       <span className="text-gray-500 text-sm">No image</span>
                     </div>
                   )}
