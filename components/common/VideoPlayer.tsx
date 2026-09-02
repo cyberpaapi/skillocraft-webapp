@@ -11,6 +11,8 @@ interface VideoPlayerProps {
   src: string;
   /** WebVTT caption track (English). Omitted when the lesson has no captions. */
   captionSrc?: string;
+  /** Alternate-language audio. The video's own audio is the implicit default. */
+  audioTracks?: { id: string; language: string; url: string }[];
   onTimeUpdate?: (currentTime: number) => void;
   onEnded?: () => void;
   onPause?: () => void;
@@ -29,6 +31,7 @@ function formatTime(seconds: number) {
 export default function VideoPlayer({
   src,
   captionSrc,
+  audioTracks,
   onTimeUpdate,
   onEnded,
   onPause,
@@ -49,6 +52,9 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [captionsOn, setCaptionsOn] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioTrackId, setAudioTrackId] = useState<string | null>(null);
+  const [audioMenuOpen, setAudioMenuOpen] = useState(false);
   const hlsRef = useRef<Hls | null>(null);
   // Stable refs so event-listener closures always call the latest prop callbacks
   const onTimeUpdateRef = useRef(onTimeUpdate);
@@ -154,6 +160,72 @@ export default function VideoPlayer({
     };
   }, [src]);
 
+  // ── Alternate audio ─────────────────────────────────────────────────────
+  // The chosen track plays from a parallel <audio> element while the video is
+  // muted, so this works for both MP4 and HLS lessons. The video stays the
+  // clock — the audio is corrected toward it whenever they drift apart.
+  const activeAudio = audioTracks?.find((t) => t.id === audioTrackId) || null;
+
+  useEffect(() => {
+    const v = videoRef.current;
+    const a = audioRef.current;
+    if (!v) return;
+
+    if (!activeAudio || !a) {
+      v.muted = muted;
+      if (a) { a.pause(); }
+      return;
+    }
+
+    // Original audio must be silent while a dub is playing.
+    v.muted = true;
+    a.volume = muted ? 0 : volume;
+    a.playbackRate = v.playbackRate;
+
+    const sync = (force = false) => {
+      if (Math.abs(a.currentTime - v.currentTime) > (force ? 0.05 : 0.3)) {
+        a.currentTime = v.currentTime;
+      }
+    };
+
+    const onPlay = () => { sync(true); a.play().catch(() => {}); };
+    const onPause = () => a.pause();
+    const onSeeked = () => { sync(true); if (!v.paused) a.play().catch(() => {}); };
+    const onTime = () => sync();
+    const onRate = () => { a.playbackRate = v.playbackRate; };
+    const onWaiting = () => a.pause();
+    const onPlaying = () => { sync(true); a.play().catch(() => {}); };
+
+    v.addEventListener('play', onPlay);
+    v.addEventListener('pause', onPause);
+    v.addEventListener('seeked', onSeeked);
+    v.addEventListener('timeupdate', onTime);
+    v.addEventListener('ratechange', onRate);
+    v.addEventListener('waiting', onWaiting);
+    v.addEventListener('playing', onPlaying);
+
+    // Selecting a track mid-playback should start it immediately.
+    sync(true);
+    if (!v.paused) a.play().catch(() => {});
+
+    return () => {
+      v.removeEventListener('play', onPlay);
+      v.removeEventListener('pause', onPause);
+      v.removeEventListener('seeked', onSeeked);
+      v.removeEventListener('timeupdate', onTime);
+      v.removeEventListener('ratechange', onRate);
+      v.removeEventListener('waiting', onWaiting);
+      v.removeEventListener('playing', onPlaying);
+    };
+  }, [activeAudio, muted, volume]);
+
+  // A lesson without this track must fall back to the original audio
+  useEffect(() => {
+    if (audioTrackId && !audioTracks?.some((t) => t.id === audioTrackId)) {
+      setAudioTrackId(null);
+    }
+  }, [audioTracks, audioTrackId]);
+
   // ── Captions ────────────────────────────────────────────────────────────
   // The browser owns rendering; we only flip the track's mode. Kept in an effect
   // so it re-applies when the track element mounts or the lesson changes.
@@ -213,6 +285,7 @@ export default function VideoPlayer({
     const val = parseFloat(e.target.value);
     setVolume(val);
     if (videoRef.current) videoRef.current.volume = val;
+    if (audioRef.current) audioRef.current.volume = val;
     setMuted(val === 0);
   };
 
@@ -221,7 +294,9 @@ export default function VideoPlayer({
     if (!v) return;
     const next = !muted;
     setMuted(next);
-    v.muted = next;
+    // With a dub selected the video stays muted; the audio element carries sound.
+    if (audioRef.current && audioTrackId) audioRef.current.volume = next ? 0 : volume;
+    else v.muted = next;
   };
 
   const toggleFullscreen = () => {
@@ -285,6 +360,16 @@ export default function VideoPlayer({
           />
         )}
       </video>
+
+      {activeAudio && (
+        <audio
+          ref={audioRef}
+          key={activeAudio.id}
+          src={activeAudio.url}
+          preload="auto"
+          className="hidden"
+        />
+      )}
 
       {/* Buffering spinner */}
       {loading && (
@@ -378,6 +463,44 @@ export default function VideoPlayer({
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Audio language */}
+          {audioTracks && audioTracks.length > 0 && (
+            <div className="relative mr-1">
+              <button
+                onClick={() => setAudioMenuOpen((o) => !o)}
+                title="Audio language"
+                className="text-white hover:text-primary transition-colors text-xs font-medium border border-white/70 rounded px-1.5 py-1"
+              >
+                {activeAudio ? activeAudio.language : 'Original'}
+              </button>
+              {audioMenuOpen && (
+                <div className="absolute bottom-full right-0 mb-2 min-w-[9rem] rounded-lg bg-black/90 border border-white/20 py-1 z-20">
+                  <button
+                    onClick={() => { setAudioTrackId(null); setAudioMenuOpen(false); }}
+                    className={cn(
+                      'block w-full text-left px-3 py-1.5 text-xs hover:bg-white/10',
+                      !activeAudio ? 'text-primary font-semibold' : 'text-white'
+                    )}
+                  >
+                    Original
+                  </button>
+                  {audioTracks.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => { setAudioTrackId(t.id); setAudioMenuOpen(false); }}
+                      className={cn(
+                        'block w-full text-left px-3 py-1.5 text-xs hover:bg-white/10',
+                        activeAudio?.id === t.id ? 'text-primary font-semibold' : 'text-white'
+                      )}
+                    >
+                      {t.language}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Captions */}
           {captionSrc && (

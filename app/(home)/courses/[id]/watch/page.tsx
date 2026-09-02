@@ -35,6 +35,7 @@ export default function CourseWatchPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [captionUrl, setCaptionUrl] = useState<string | null>(null);
+  const [audioTracks, setAudioTracks] = useState<{ id: string; language: string; url: string }[]>([]);
   const [vdoOtp, setVdoOtp] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [ordered, setOrdered] = useState(false);
@@ -143,6 +144,7 @@ export default function CourseWatchPage() {
       setStreamUrl(null);
       setVdoOtp(null);
       setCaptionUrl(null);
+    setAudioTracks([]);
       setVideoError(null);
       const link = activeProduct?.videoLink;
       if (!link) return;
@@ -163,6 +165,7 @@ export default function CourseWatchPage() {
           else throw new Error('No URL');
           // Same relative form as the video URL, so it resolves the same way
           if (typeof data?.captionUrl === 'string') setCaptionUrl(data.captionUrl);
+        if (Array.isArray(data?.audioTracks)) setAudioTracks(data.audioTracks);
         }
       } catch {
         setStreamUrl(resolved);
@@ -244,6 +247,7 @@ export default function CourseWatchPage() {
                   <VideoPlayer
                     src={streamUrl}
                     captionSrc={captionUrl || undefined}
+                    audioTracks={audioTracks}
                     className="w-full h-full"
                     onTimeUpdate={(t) => { watchTimeRef.current = t; }}
                     onPause={sendAnalytics}

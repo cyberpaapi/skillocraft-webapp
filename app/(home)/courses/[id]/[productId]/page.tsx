@@ -35,6 +35,7 @@ export default function ProductPage() {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [captionUrl, setCaptionUrl] = useState<string | null>(null);
+  const [audioTracks, setAudioTracks] = useState<{ id: string; language: string; url: string }[]>([]);
   const [vdoOtp, setVdoOtp] = useState<{ otp: string; playbackInfo: string } | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const watchTimeRef = useRef<number>(0);
@@ -68,6 +69,7 @@ export default function ProductPage() {
     setVideoError(null);
     setVdoOtp(null);
     setCaptionUrl(null);
+    setAudioTracks([]);
 
     const resolved = resolveVideoUrl(product.videoLink);
 
@@ -96,6 +98,7 @@ export default function ProductPage() {
         else throw new Error('No URL returned');
         // Same relative form as the video URL, so it resolves the same way
         if (typeof data?.captionUrl === 'string') setCaptionUrl(data.captionUrl);
+        if (Array.isArray(data?.audioTracks)) setAudioTracks(data.audioTracks);
       }
     } catch {
       setStreamUrl(resolved);
@@ -182,6 +185,7 @@ export default function ProductPage() {
                 <VideoPlayer
                   src={streamUrl}
                   captionSrc={captionUrl || undefined}
+                  audioTracks={audioTracks}
                   className="w-full h-full"
                   onTimeUpdate={(t) => { watchTimeRef.current = t; }}
                   onPause={sendAnalytics}
